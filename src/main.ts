@@ -13,6 +13,9 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
+  // 允许跨域
+  app.enableCors();
+
   // 全局错误过滤器
   app.useGlobalFilters(new HttpExceptionFilter());
 
