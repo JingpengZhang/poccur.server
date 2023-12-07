@@ -26,3 +26,8 @@ interface PageQuery {
   page?: number;
   pageCount?: number;
 }
+
+
+type ToAny<T> = {
+  [Key in keyof T]: any
+}

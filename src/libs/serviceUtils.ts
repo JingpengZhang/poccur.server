@@ -1,3 +1,4 @@
+import { BadRequestException, HttpException, NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { Types } from 'mongoose';
 
@@ -36,8 +37,23 @@ export const isIdExist = async <T>(
   };
 };
 
+export const mongooseErrorHandle = (err: any) => {
+  if (err.code === 11000) {
+    const duplicateField = Object.keys(err.keyValue)[0];
+    throw new BadRequestException({
+      message: `字段 ${duplicateField} 重复`,
+    });
+  } else if (err.path && err.path === '_id') {
+    throw new NotFoundException();
+  } else {
+    throw new BadRequestException('未知错误,请稍后再试');
+  }
+};
+
+
 export default {
   distillGetListDto,
   isIdValid,
   isIdExist,
+  mongooseErrorHandle,
 };
