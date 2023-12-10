@@ -1,11 +1,10 @@
-import {
-  Injectable, NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, QueryOptions } from 'mongoose';
 import { Menu } from 'src/schemas/menu.schema';
-import { CreateMenuDto, DeleteDto, UpdateMenuDto } from './menu.dto';
+import { CreateMenuDto, DeleteDto, UpdateIndexesDto, UpdateMenuDto } from './menu.dto';
 import serviceUtils from 'src/libs/serviceUtils';
+import ArrayUtils from '../../../../common/array-utils';
 
 @Injectable()
 export class MenuService {
@@ -13,7 +12,17 @@ export class MenuService {
   }
 
   async create(createDto: CreateMenuDto) {
-    const createMenu = new this.menuModel(createDto);
+
+    // 父菜单是否存在
+    if (createDto.parent) {
+      const parent = await this.menuModel.exists({ _id: createDto.parent });
+      if (!parent) throw new BadRequestException('添加失败,父菜单不存在');
+    }
+
+
+    // 构造索引
+    const brothers = await this.menuModel.find({ parent: createDto.parent }) as Menu[];
+    const createMenu = new this.menuModel({ ...createDto, index: brothers.length + 1 });
 
     try {
       await createMenu.save();
@@ -26,7 +35,7 @@ export class MenuService {
     try {
       const { id, ...params } = updateDto;
 
-      const result = await this.menuModel.findByIdAndUpdate(updateDto.id, {
+      return await this.menuModel.findByIdAndUpdate(updateDto.id, {
         ...params,
       });
     } catch (err) {
@@ -83,4 +92,38 @@ export class MenuService {
       serviceUtils.mongooseErrorHandle(err);
     }
   }
+
+  async getMenuTree() {
+    const menus = await this.getList({});
+
+    let removeVMenus: Menu[] = [];
+    // 剔除 __v 属性
+    menus.forEach(item => {
+      const { __v, _id, ...menu } = item['_doc'];
+      menu.id = _id;
+      removeVMenus.push(menu);
+    });
+
+    const groupedAndSortedMenus = ArrayUtils.groupAndSort(removeVMenus, 'parent', 'index');
+
+    return ArrayUtils.generateTree(groupedAndSortedMenus, {
+      indexKey: 'parent',
+      rootVal: null,
+      parentBy: 'id',
+    });
+  }
+
+  async setMenuIndexes(body: UpdateIndexesDto) {
+    for (let i = 0; i < body.indexes.length; i++) {
+      let item = body.indexes[i];
+      try {
+        await this.menuModel.updateOne({ _id: item.id }, {
+          index: item.index,
+          parent: item.parent,
+        });
+      } catch (err) {
+      }
+    }
+  }
+
 }

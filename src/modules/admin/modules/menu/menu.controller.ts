@@ -6,7 +6,7 @@ import {
   DeleteDto,
   deleteSchema,
   GetOneByIdDto,
-  getOneByIdSchema,
+  getOneByIdSchema, UpdateIndexesDto, updateIndexesSchema,
   UpdateMenuDto,
   updateMenuSchema,
 } from './menu.dto';
@@ -40,8 +40,11 @@ export class MenuController {
   @Post('update')
   @UsePipes(new JoiValidationPipe(updateMenuSchema))
   async update(@Body() body: UpdateMenuDto) {
-    await this.service.update(body);
-    return;
+    const result = await this.service.update(body);
+    if (!result) throw new NotFoundException('待修改ID不存在');
+    return {
+      message: '修改成功',
+    };
   }
 
   @Get('count')
@@ -63,5 +66,19 @@ export class MenuController {
     return {
       deleteCount: await this.service.delete(body),
     };
+  }
+
+  @Get('tree')
+  async getMenuTree() {
+    return {
+      menuTree: await this.service.getMenuTree(),
+    };
+  }
+
+  @Post('update_index')
+  @UsePipes(new JoiValidationPipe(updateIndexesSchema))
+  async setMenuIndexes(@Body() body: UpdateIndexesDto) {
+    await this.service.setMenuIndexes(body);
+    return;
   }
 }

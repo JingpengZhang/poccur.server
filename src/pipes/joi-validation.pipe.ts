@@ -4,6 +4,7 @@ import {
   PipeTransform,
 } from '@nestjs/common';
 import { ObjectSchema } from 'joi';
+import { isUndefined } from '@nestjs/common/utils/shared.utils';
 
 @Injectable()
 export class JoiValidationPipe implements PipeTransform {
@@ -11,6 +12,11 @@ export class JoiValidationPipe implements PipeTransform {
   }
 
   transform(value: Record<string, any>) {
+    if (isUndefined(value)) {
+      throw new BadRequestException({
+        message: '请传入参数',
+      });
+    }
     const { error } = this.schema.validate(value);
     if (error) {
       throw new BadRequestException({

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
+import mongoose, { ObjectId, Types } from 'mongoose';
 
 @Schema()
 export class Menu {
@@ -13,14 +13,14 @@ export class Menu {
   iconclass: string;
 
   @Prop({
-    default(val: any): any {
-      return false;
-    },
+    default: null,
+    type: Types.ObjectId,
+    ref: 'Menu',
   })
-  group: boolean;
-
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Menu' })
   parent: Menu;
+
+  @Prop()
+  index: number;
 }
 
 export const MenuSchema = SchemaFactory.createForClass(Menu);
