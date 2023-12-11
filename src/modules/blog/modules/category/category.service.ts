@@ -3,8 +3,8 @@ import { CreateCategoryDto, UpdateCategoryDto } from './category.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Category } from 'src/schemas/category.schema';
 import { Model, QueryOptions } from 'mongoose';
-import serviceUtils from 'src/libs/serviceUtils';
 import { DeleteDto } from '../../../admin/modules/menu/menu.dto';
+import MongooseExceptions from '../../../../exceptions/MongooseExceptions';
 
 @Injectable()
 export class CategoryService {
@@ -19,7 +19,7 @@ export class CategoryService {
       const createCategory = new this.model(createDto);
       await createCategory.save();
     } catch (err) {
-      serviceUtils.mongooseErrorHandle(err);
+      throw new MongooseExceptions(err);
     }
   }
 
@@ -31,7 +31,7 @@ export class CategoryService {
     try {
       return await this.model.findByIdAndUpdate(id, { ...params });
     } catch (err) {
-      serviceUtils.mongooseErrorHandle(err);
+      throw new MongooseExceptions(err);
     }
   }
 
@@ -56,7 +56,7 @@ export class CategoryService {
             toDeleteIds.push(item._id);
           });
         } catch (err) {
-          serviceUtils.mongooseErrorHandle(err);
+          throw new MongooseExceptions(err);
         }
       } else {
         toDeleteIds = ids;
@@ -64,7 +64,7 @@ export class CategoryService {
       const result = await this.model.deleteMany({ _id: { $in: toDeleteIds } });
       return result.deletedCount;
     } catch (err) {
-      serviceUtils.mongooseErrorHandle(err);
+      throw new MongooseExceptions(err);
     }
   }
 

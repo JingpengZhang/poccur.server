@@ -1,18 +1,10 @@
 import { Body, Controller, Get, NotFoundException, Post, Query, UsePipes } from '@nestjs/common';
 import { MenuService } from './menu.service';
-import {
-  CreateMenuDto,
-  createMenuSchema,
-  DeleteDto,
-  deleteSchema,
-  GetOneByIdDto,
-  getOneByIdSchema, UpdateIndexesDto, updateIndexesSchema,
-  UpdateMenuDto,
-  updateMenuSchema,
-} from './menu.dto';
+import { CreateMenuDto, DeleteDto, GetOneByIdDto, UpdateIndexesDto, UpdateMenuDto } from './menu.dto';
 import { JoiValidationPipe } from 'src/pipes/joi-validation.pipe';
 import { GetListSchema } from '../../../../common/common.schema';
 import { GetListPipe } from '../../../../pipes/get-list.pipe';
+import { createMenuSchema, deleteSchema, getOneByIdSchema, updateIndexesSchema, updateMenuSchema } from './menu.schema';
 
 @Controller('/admin/menu')
 export class MenuController {

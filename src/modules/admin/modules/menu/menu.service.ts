@@ -3,8 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, QueryOptions } from 'mongoose';
 import { Menu } from 'src/schemas/menu.schema';
 import { CreateMenuDto, DeleteDto, UpdateIndexesDto, UpdateMenuDto } from './menu.dto';
-import serviceUtils from 'src/libs/serviceUtils';
 import ArrayUtils from '../../../../common/array-utils';
+import MongooseExceptions from '../../../../exceptions/MongooseExceptions';
 
 @Injectable()
 export class MenuService {
@@ -19,7 +19,6 @@ export class MenuService {
       if (!parent) throw new BadRequestException('添加失败,父菜单不存在');
     }
 
-
     // 构造索引
     const brothers = await this.menuModel.find({ parent: createDto.parent }) as Menu[];
     const createMenu = new this.menuModel({ ...createDto, index: brothers.length + 1 });
@@ -27,7 +26,7 @@ export class MenuService {
     try {
       await createMenu.save();
     } catch (err) {
-      serviceUtils.mongooseErrorHandle(err);
+      throw new MongooseExceptions(err);
     }
   }
 
@@ -39,7 +38,7 @@ export class MenuService {
         ...params,
       });
     } catch (err) {
-      serviceUtils.mongooseErrorHandle(err);
+      throw new MongooseExceptions(err);
     }
   }
 
@@ -66,7 +65,7 @@ export class MenuService {
       }
 
     } catch (err) {
-      serviceUtils.mongooseErrorHandle(err);
+      throw new MongooseExceptions(err);
     }
   }
 
@@ -81,7 +80,7 @@ export class MenuService {
             toDeleteIds.push(item._id);
           });
         } catch (err) {
-          serviceUtils.mongooseErrorHandle(err);
+          throw new MongooseExceptions(err);
         }
       } else {
         toDeleteIds = ids;
@@ -89,7 +88,7 @@ export class MenuService {
       const result = await this.menuModel.deleteMany({ _id: { $in: toDeleteIds } });
       return result.deletedCount;
     } catch (err) {
-      serviceUtils.mongooseErrorHandle(err);
+      throw new MongooseExceptions(err);
     }
   }
 
