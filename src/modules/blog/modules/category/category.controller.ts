@@ -1,57 +1,47 @@
-import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Post, Query, UsePipes } from '@nestjs/common';
 import { CategoryService } from './category.service';
-import { CreateCategoryDto, UpdateCategoryDto } from './category.dto';
-import serviceUtils from 'src/libs/serviceUtils';
-import { Category } from 'src/schemas/category.schema';
+import { CreateCategoryDto, DeleteCategoryDto, UpdateCategoryDto } from './category.dto';
+import { JoiValidationPipe } from '../../../../pipes/joi-validation.pipe';
+import { createCategorySchema, deleteCategorySchema, updateCategorySchema } from './category.schema';
+import { GetListSchema } from '../../../../common/common.schema';
+import { GetListPipe } from '../../../../pipes/get-list.pipe';
 
 @Controller('/blog/category')
 export class CategoryController {
-  constructor(private readonly service: CategoryService) {}
+  constructor(private readonly service: CategoryService) {
+  }
 
-  // * 添加分类
   @Post('create')
-  async create(@Body() body: CreateCategoryDto): Promise<ResponseData> {
-    const createResult = await this.service.create(body);
-
-    return {
-      code: createResult.result ? 200 : 1000,
-      message: createResult.message,
-    };
+  @UsePipes(new JoiValidationPipe(createCategorySchema))
+  async create(@Body() body: CreateCategoryDto) {
+    await this.service.create(body);
+    return;
   }
 
-  // * 获取分类列表
-  @Get('list')
-  async getList(
-    @Query() query: PageQuery,
-  ): Promise<ResponseListData<Category>> {
-    const categories = await this.service.getList(
-      serviceUtils.distillGetListDto(query),
-    );
-    return {
-      code: 200,
-      message: '操作成功',
-      data: categories,
-    };
-  }
-
-  // * 修改分类数据
   @Post('update')
-  async update(@Body() body: UpdateCategoryDto): Promise<ResponseData> {
+  @UsePipes(new JoiValidationPipe(updateCategorySchema))
+  async update(@Body() body: UpdateCategoryDto) {
     const result = await this.service.update(body);
+    if (!result) throw new NotFoundException('待修改ID不存在');
+  }
+
+  @Get('list')
+  @UsePipes(new JoiValidationPipe(GetListSchema))
+  async getList(@Query(new GetListPipe()) query: GetListDto) {
+    const list = await this.service.getList(query);
+    const total = await this.service.getCount();
     return {
-      code: result.result ? 200 : 1000,
-      message: result.message,
+      list,
+      total,
     };
   }
 
   // * 删除分类(提供单个和批量)
   @Delete('delete')
-  async delete(@Body() body: { params: string | string[] }) {
-    const result = await this.service.delete(body.params);
+  @UsePipes(new JoiValidationPipe(deleteCategorySchema))
+  async delete(@Body() body: DeleteCategoryDto) {
     return {
-      code: result.result ? 200 : 1000,
-      data: result.data,
-      message: result.message,
+      deleteCount: await this.service.delete(body),
     };
   }
 }

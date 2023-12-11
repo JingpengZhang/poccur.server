@@ -1,8 +1,9 @@
 import * as Joi from 'joi';
 import { GetListDto } from './common.dto';
-import { ObjectSchema } from 'joi';
 
-export const GetListSchema: ObjectSchema<ToAny<GetListDto>> = Joi.object({
+export type JoiSchemaObject<T> = Joi.ObjectSchema<Required<ToAny<T>>>
+
+export const GetListSchema: JoiSchemaObject<GetListDto> = Joi.object({
     page: Joi.number().min(0),
     pageSize: Joi.number().min(0),
   },
