@@ -1,9 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { ObjectId, Types } from 'mongoose';
+import { Types } from 'mongoose';
 
 @Schema()
 export class Menu {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   name: string;
 
   @Prop({ required: true })
@@ -21,6 +21,12 @@ export class Menu {
 
   @Prop()
   index: number;
+
+  @Prop({ default: true })
+  enable: boolean;
+
+  @Prop({ default: true })
+  visible: boolean;
 }
 
 export const MenuSchema = SchemaFactory.createForClass(Menu);

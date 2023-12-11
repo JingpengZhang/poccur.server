@@ -6,6 +6,8 @@ export interface CreateMenuDto {
   path: string;
   icon: string;
   parent: string;
+  enable: boolean;
+  visible: boolean;
 }
 
 export const createMenuSchema = Joi.object({
@@ -13,6 +15,8 @@ export const createMenuSchema = Joi.object({
   path: Joi.string().required(),
   iconclass: Joi.string().required(),
   parent: Joi.string().allow(null, ''),
+  enable: Joi.boolean(),
+  visible: Joi.boolean(),
 }).required();
 
 export interface UpdateMenuDto extends CreateMenuDto {
@@ -21,11 +25,7 @@ export interface UpdateMenuDto extends CreateMenuDto {
 
 export const updateMenuSchema = Joi.object({
   id: Joi.string().required(),
-  name: Joi.string().required(),
-  path: Joi.string().required(),
-  iconclass: Joi.string().required(),
-  parent: Joi.string().allow(null, ''),
-}).required();
+}).concat(createMenuSchema);
 
 
 export interface GetOneByIdDto {
