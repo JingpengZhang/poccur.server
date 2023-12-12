@@ -6,7 +6,7 @@ import { createCategorySchema, deleteCategorySchema, updateCategorySchema } from
 import { GetListSchema } from '../../../../common/common.schema';
 import { GetListPipe } from '../../../../pipes/get-list.pipe';
 
-@Controller('/blog/category')
+@Controller('/client/category')
 export class CategoryController {
   constructor(private readonly service: CategoryService) {
   }
