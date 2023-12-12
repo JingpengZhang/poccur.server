@@ -37,7 +37,20 @@ export class CategoryService {
 
   // * 获取分类列表
   async getList(query: QueryOptions) {
-    return this.model.find({}, null, query);
+    try {
+      const queryResult = await this.model.find({}, null, query);
+      let result = [];
+      queryResult.forEach(item => {
+        const { _id, __v, ...rest } = item['_doc'];
+        result.push({
+          id: _id,
+          ...rest,
+        });
+      });
+      return result;
+    } catch (err) {
+      throw new MongooseExceptions(err);
+    }
   }
 
   async getCount() {
