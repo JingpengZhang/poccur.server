@@ -37,7 +37,7 @@ export class CategoryController {
   }
 
   // * 删除分类(提供单个和批量)
-  @Delete('delete')
+  @Post('delete')
   @UsePipes(new JoiValidationPipe(deleteCategorySchema))
   async delete(@Body() body: DeleteCategoryDto) {
     return {
