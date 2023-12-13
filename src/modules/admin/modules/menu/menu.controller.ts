@@ -5,6 +5,7 @@ import { JoiValidationPipe } from 'src/pipes/joi-validation.pipe';
 import { GetListSchema } from '../../../../common/common.schema';
 import { GetListPipe } from '../../../../pipes/get-list.pipe';
 import { createMenuSchema, deleteSchema, getOneByIdSchema, updateIndexesSchema, updateMenuSchema } from './menu.schema';
+import { Public } from '../../../../decorators/public.decorator';
 
 @Controller('/admin/menu')
 export class MenuController {
@@ -12,6 +13,7 @@ export class MenuController {
   }
 
   @Get('list')
+  @Public()
   @UsePipes(new JoiValidationPipe(GetListSchema))
   async getList(@Query(new GetListPipe()) query: GetListDto) {
     const list = await this.service.getList(query);

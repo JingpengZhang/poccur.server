@@ -14,7 +14,7 @@ export class JoiValidationPipe implements PipeTransform {
   transform(value: Record<string, any>) {
     if (isUndefined(value)) {
       throw new BadRequestException({
-        message: '请传入参数',
+        message: '缺少参数',
       });
     }
     const { error } = this.schema.validate(value);
