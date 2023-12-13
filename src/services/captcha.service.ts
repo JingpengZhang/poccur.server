@@ -7,8 +7,8 @@ export class CaptchaService {
 
   generateCaptcha() {
     this.captcha = svgCaptcha.create({
-      color: true,
-      size: 6,
+      color: false,
+      size: 4,
       noise: 2,
       ignoreChars: '0o1i',
     });
@@ -17,7 +17,7 @@ export class CaptchaService {
 
   validateCaptcha(str: string) {
     try {
-      return this.captcha.text === str;
+      return this.captcha.text.toUpperCase() === str.toUpperCase();
     } catch (err) {
       throw new BadRequestException('验证码已过期');
     }
