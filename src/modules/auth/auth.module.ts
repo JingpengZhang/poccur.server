@@ -8,6 +8,7 @@ import { jwtConstants } from './constants';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from '../../guards/auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
+import { CaptchaService } from '../../services/captcha.service';
 
 @Module({
   imports: [UserModule,
@@ -18,7 +19,7 @@ import { RolesGuard } from '../../guards/roles.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, BcryptService,
+  providers: [
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
@@ -27,6 +28,7 @@ import { RolesGuard } from '../../guards/roles.guard';
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
+    AuthService, BcryptService, CaptchaService,
   ],
 })
 

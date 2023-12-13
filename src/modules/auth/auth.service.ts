@@ -1,22 +1,18 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
-import { SignInDto } from './auth.joi.schema';
 import { BcryptService } from '../../services/bcrypt.service';
 import { JwtService } from '@nestjs/jwt';
+import { SignInDto } from './auth.dto';
 
 @Injectable()
 export class AuthService {
   constructor(private userService: UserService, private bcryptService: BcryptService, private jwtService: JwtService) {
   }
 
-  async signIn() {
-    const signInDto: SignInDto = {
-      email: 'jingpeng@test.com',
-      password: 'SSSS22222',
-    };
+  async signIn(signInDto: SignInDto) {
 
     const userInfo = await this.userService.findOneByEmail(signInDto);
-    if (!this.bcryptService.comparePassword(signInDto.password, userInfo.password)) throw new UnauthorizedException();
+    if (!userInfo || !this.bcryptService.comparePassword(signInDto.password, userInfo.password)) throw new BadRequestException('登陆失败,用户名或密码错误');
 
     return {
       token: await this.jwtService.signAsync({
