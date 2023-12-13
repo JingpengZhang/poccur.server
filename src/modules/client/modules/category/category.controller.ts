@@ -7,6 +7,8 @@ import { GetListSchema } from '../../../../common/common.schema';
 import { GetListPipe } from '../../../../pipes/get-list.pipe';
 import { FastifyRequest } from 'fastify';
 import { Public } from '../../../../decorators/public.decorator';
+import { Roles } from '../../../../decorators/role.decorator';
+import { Role } from '../../../auth/role.enum';
 
 @Controller('/client/category')
 export class CategoryController {
@@ -14,6 +16,7 @@ export class CategoryController {
   }
 
   @Post('create')
+  @Roles(Role.Admin)
   @UsePipes(new JoiValidationPipe(createCategorySchema))
   async create(@Req() request: FastifyRequest, @Body() body: CreateCategoryDto) {
     await this.service.create(body);
@@ -26,7 +29,7 @@ export class CategoryController {
     const result = await this.service.update(body);
     if (!result) throw new NotFoundException('待修改ID不存在');
   }
-  
+
   @Get('list')
   @Public()
   @UsePipes(new JoiValidationPipe(GetListSchema))
