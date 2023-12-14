@@ -5,7 +5,7 @@ import { Role } from '../auth/role.enum';
 export class User {
   @Prop({ required: true, unique: true })
   email: string;
-π
+
   @Prop({ required: true })
   password: string;
 
