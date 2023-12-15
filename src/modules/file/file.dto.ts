@@ -1,3 +1,3 @@
-export interface UploadFileDto {
-  files
+export interface DeleteFilesDto {
+  ids: string[];
 }

@@ -11,6 +11,8 @@ import * as util from 'util';
 import { pipeline } from 'stream';
 import { FileType } from '../../common/file-type-enums';
 import MongooseExceptions from '../../exceptions/MongooseExceptions';
+import { DeleteFilesDto } from './file.dto';
+import MongoUtils from '../../common/mongo-utils';
 
 const pump = util.promisify(pipeline);
 
@@ -83,5 +85,21 @@ export class FileService {
     }
 
     return data;
+  }
+
+  async delete(dto: DeleteFilesDto) {
+    const { ids } = dto;
+    let deleteCount = 0;
+    for await (const id of ids) {
+      try {
+        const doc = MongoUtils.formatDoc(await this.model.findById(id));
+        await fs.rmSync(doc.storagePath);
+        await this.model.deleteOne({ _id: id });
+        deleteCount++;
+      } catch (err) {
+        throw new MongooseExceptions(err);
+      }
+    }
+    return deleteCount;
   }
 }
