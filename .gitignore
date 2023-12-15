@@ -34,4 +34,9 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
-/storage/*
+/storage/audio/*
+/storage/doc/*
+/storage/image/*
+/storage/other/*
+/storage/video/*
+/storage/zip/*
