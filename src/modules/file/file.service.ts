@@ -52,6 +52,7 @@ export class FileService {
       extension: extension,
       uploadTime: now.valueOf(),
       uploader: uploaderId,
+      storagePath: filePath,
       extra: {},
     };
 
@@ -77,7 +78,7 @@ export class FileService {
   async saveFiles(files: AsyncIterableIterator<MultipartFile>, uploaderId: string) {
     const data = [];
     for await (const file of files) {
-      const info = await this.saveFile(file, uploaderId)
+      const info = await this.saveFile(file, uploaderId);
       data.push(info);
     }
 

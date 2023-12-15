@@ -65,6 +65,9 @@ export class File {
   })
   uploader: User;
 
+  @Prop()
+  storagePath: string;
+
 }
 
 export const FileSchema = SchemaFactory.createForClass(File);
