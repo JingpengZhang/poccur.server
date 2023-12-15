@@ -6,6 +6,9 @@ import {
 } from '@nestjs/platform-fastify';
 import { TransformInterceptor } from './interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './filters/http-exception-filter.filter';
+import fastifyMultipart from '@fastify/multipart';
+import * as fastifyStatic from '@fastify/static';
+import * as path from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -21,6 +24,13 @@ async function bootstrap() {
 
   // 全局注册拦截器
   app.useGlobalInterceptors(new TransformInterceptor());
+
+  await app.register(fastifyMultipart);
+
+  await app.register(fastifyStatic, {
+    root: path.join(__dirname, '..', 'storage'),
+    prefix: '/public/',
+  });
 
   await app.listen(3000);
 }
