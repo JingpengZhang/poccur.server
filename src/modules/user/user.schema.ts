@@ -25,6 +25,9 @@ export class User {
     default: [Role.User],
   })
   roles: Role[];
+
+  @Prop()
+  career: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

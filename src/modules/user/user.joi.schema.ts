@@ -1,5 +1,5 @@
 import { JoiSchemaObject } from '../../common/common.schema';
-import { CreateUserDto } from './user.dto';
+import { CreateUserDto, FindOneUserByIdDto, UpdateUserDto } from './user.dto';
 import * as Joi from 'joi';
 
 export const accountSchema = Joi.object({
@@ -18,3 +18,16 @@ export const createUserSchema: JoiSchemaObject<CreateUserDto> = Joi.object({
     'string.empty': '邮箱不能为空',
   }),
 }).concat(accountSchema);
+
+export const findOneByIdSchema: JoiSchemaObject<FindOneUserByIdDto> = Joi.object({
+  id: Joi.string().required(),
+});
+
+
+export const updateUserSchema: JoiSchemaObject<UpdateUserDto> = Joi.object({
+  id: Joi.string().required(),
+  username: Joi.string(),
+  roles: Joi.array().items(Joi.string()),
+  description: Joi.string(),
+  career: Joi.string(),
+});
