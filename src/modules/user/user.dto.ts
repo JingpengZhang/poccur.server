@@ -22,6 +22,9 @@ export interface UpdateUserDto {
   roles?: Role[];
   description?: string;
   career?: string;
+  city?: string
+  company?: string
+  website?: string
 }
 
 export interface UpdateAvatarDto {

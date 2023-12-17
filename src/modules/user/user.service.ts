@@ -20,7 +20,7 @@ export class UserService {
       const password = this.bcryptService.encodePassword(createUserDto.password);
       const user = new this.model({ ...createUserDto, password });
       if (!createUserDto.username) user.username = 'user_' + user._id.toString().slice(-4);
-      user.registerTime = dayjs().valueOf()
+      user.registerTime = dayjs().valueOf();
       await user.save();
     } catch (err) {
       console.log(err);
@@ -48,7 +48,7 @@ export class UserService {
     } = MongoUtils.formatDoc<any>(result);
     let profile = {};
     Object.assign(profile, rest);
-    profile['avatar'] = avatar.path;
+    profile['avatar'] = avatar ? avatar.path : '';
     return profile;
   }
 

@@ -30,4 +30,7 @@ export const updateUserSchema: JoiSchemaObject<UpdateUserDto> = Joi.object({
   roles: Joi.array().items(Joi.string()),
   description: Joi.string(),
   career: Joi.string(),
+  city: Joi.string(),
+  company: Joi.string(),
+  website: Joi.string(),
 });

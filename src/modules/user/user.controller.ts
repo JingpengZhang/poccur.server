@@ -28,6 +28,15 @@ export class UserController {
     };
   }
 
+  @Post('current-user-profile')
+  async getCurrentUserProfile(@Req() request: FastifyRequest) {
+    return {
+      profile: await this.service.findOneById({
+        id: request['user'].id,
+      }),
+    };
+  }
+
   @Post('update')
   @Public()
   @UsePipes(new JoiValidationPipe(updateUserSchema))
@@ -49,7 +58,7 @@ export class UserController {
   }
 
   @Get('get-by-id')
-  async getUserInfoById(@Query() query) {
+  async getUserInfoById(@Query() query: FindOneUserByIdDto) {
     await this.service.findOneById(query);
   }
 }

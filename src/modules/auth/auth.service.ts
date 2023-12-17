@@ -22,18 +22,8 @@ export class AuthService {
           email: userInfo.email,
           roles: userInfo.roles,
         }),
-        userInfo: {
-          id: userInfo._id,
-          username: userInfo.username,
-          email: userInfo.email,
-          roles: userInfo.roles,
-          avatar: userInfo.avatar ? (userInfo.avatar as any).path : null,
-          registerTime: userInfo.registerTime,
-          description: userInfo.description,
-        },
       };
     } catch (err) {
-      console.log(err);
       throw new MongooseExceptions(err);
     }
   }
