@@ -14,7 +14,7 @@ export class AuthService {
 
     try {
       const userInfo = await this.userService.findOneByEmail(signInDto);
-      if (!userInfo || !this.bcryptService.comparePassword(signInDto.password, userInfo.password)) throw new BadRequestException('登陆失败,用户名或密码错误');
+      if (!userInfo || !this.bcryptService.comparePassword(signInDto.password, userInfo.password)) new BadRequestException('登陆失败,用户名或密码错误');
 
       return {
         token: await this.jwtService.signAsync({
@@ -27,12 +27,13 @@ export class AuthService {
           username: userInfo.username,
           email: userInfo.email,
           roles: userInfo.roles,
-          avatar: userInfo.avatar,
+          avatar: userInfo.avatar ? (userInfo.avatar as any).path : null,
           registerTime: userInfo.registerTime,
           description: userInfo.description,
         },
       };
     } catch (err) {
+      console.log(err);
       throw new MongooseExceptions(err);
     }
   }

@@ -93,8 +93,8 @@ export class FileService {
     for await (const id of ids) {
       try {
         const doc = MongoUtils.formatDoc(await this.model.findById(id));
-        await fs.rmSync(doc.storagePath);
         await this.model.deleteOne({ _id: id });
+        fs.rmSync(doc.storagePath);
         deleteCount++;
       } catch (err) {
         throw new MongooseExceptions(err);

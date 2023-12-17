@@ -1,4 +1,5 @@
 import { Role } from '../auth/role.enum';
+import { MultipartFile } from '@fastify/multipart';
 
 export interface CreateUserDto {
   email: string;
@@ -18,7 +19,12 @@ export interface FindOneUserByIdDto {
 export interface UpdateUserDto {
   id: string,
   username?: string;
-  roles?: string;
+  roles?: Role[];
   description?: string;
   career?: string;
+}
+
+export interface UpdateAvatarDto {
+  uploaderId: string;
+  file: MultipartFile;
 }

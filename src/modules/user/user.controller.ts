@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, UsePipes } from '@nestjs/common';
 import { JoiValidationPipe } from '../../pipes/joi-validation.pipe';
 import { createUserSchema, findOneByIdSchema, updateUserSchema } from './user.joi.schema';
 import { UserService } from './user.service';
-import { CreateUserDto, UpdateUserDto } from './user.dto';
+import { CreateUserDto, FindOneUserByIdDto, UpdateUserDto } from './user.dto';
 import { Public } from '../../decorators/public.decorator';
+import { FastifyRequest } from 'fastify';
 
 @Controller('/user')
 export class UserController {
@@ -21,9 +22,9 @@ export class UserController {
   @Get('profile')
   @Public()
   @UsePipes(new JoiValidationPipe(findOneByIdSchema))
-  async getProfile(@Query() query) {
+  async getProfile(@Query() query: FindOneUserByIdDto) {
     return {
-      profile: await this.service.getProfile(query),
+      profile: await this.service.findOneById(query),
     };
   }
 
@@ -32,5 +33,23 @@ export class UserController {
   @UsePipes(new JoiValidationPipe(updateUserSchema))
   async update(@Body() body: UpdateUserDto) {
     await this.service.update(body);
+  }
+
+  @Post('update-avatar')
+  async updateAvatar(@Req() request: FastifyRequest) {
+    const file = await request.file();
+    const uploaderId = request['user'].id;
+    const path = await this.service.updateAvatar({
+      uploaderId,
+      file,
+    });
+    return {
+      path,
+    };
+  }
+
+  @Get('get-by-id')
+  async getUserInfoById(@Query() query) {
+    await this.service.findOneById(query);
   }
 }

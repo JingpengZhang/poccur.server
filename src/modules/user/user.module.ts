@@ -4,6 +4,7 @@ import { User, UserSchema } from './user.schema';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { BcryptService } from '../../services/bcrypt.service';
+import { FileModule } from '../file/file.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { BcryptService } from '../../services/bcrypt.service';
         schema: UserSchema,
       },
     ]),
+    FileModule,
   ],
   controllers: [UserController],
   providers: [UserService, BcryptService],

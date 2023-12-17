@@ -1,16 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './user.schema';
 import { Model } from 'mongoose';
-import { CreateUserDto, FindOneUserByEmailDto, FindOneUserByIdDto, UpdateUserDto } from './user.dto';
+import { CreateUserDto, FindOneUserByEmailDto, FindOneUserByIdDto, UpdateAvatarDto, UpdateUserDto } from './user.dto';
 import MongooseExceptions from '../../exceptions/MongooseExceptions';
 import { BcryptService } from '../../services/bcrypt.service';
 import { Role } from '../auth/role.enum';
 import MongoUtils from '../../common/mongo-utils';
+import { FileService } from '../file/file.service';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private model: Model<User>, private bcryptService: BcryptService) {
+  constructor(@InjectModel(User.name) private model: Model<User>, private bcryptService: BcryptService, private fileService: FileService) {
   }
 
   async create(createUserDto: CreateUserDto) {
@@ -32,10 +33,26 @@ export class UserService {
 
   async findOneByEmail(findOneUserByEmailDto: FindOneUserByEmailDto) {
     try {
-      return await this.model.findOne({ email: findOneUserByEmailDto.email });
+      return await this.model.findOne({ email: findOneUserByEmailDto.email }).populate('avatar', 'path');
     } catch (err) {
       throw new MongooseExceptions(err);
     }
+  }
+
+  async findOneById(dto: FindOneUserByIdDto) {
+    const result = await this.model.findById(dto.id).populate('avatar', 'path');
+    if (!result) throw new BadRequestException({
+      message: '用户不存在',
+    });
+    const {
+      password,
+      avatar,
+      ...rest
+    } = MongoUtils.formatDoc<any>(result);
+    let profile = {};
+    Object.assign(profile, rest);
+    profile['avatar'] = avatar.path;
+    return profile;
   }
 
   async findSuper() {
@@ -46,22 +63,30 @@ export class UserService {
     }
   }
 
-
-  async getProfile(query: FindOneUserByIdDto) {
-    try {
-      const result = await this.model.findById(query.id);
-      const { password, ...rest } = MongoUtils.formatDoc<User>(result);
-      return rest;
-    } catch (err) {
-      throw new MongooseExceptions(err);
-    }
-  }
-
   async update(body: UpdateUserDto) {
     try {
       const { id, ...rest } = body;
       await this.model.findByIdAndUpdate(id, rest);
     } catch (err) {
+      throw new MongooseExceptions(err);
+    }
+  }
+
+  async updateAvatar(dto: UpdateAvatarDto) {
+    try {
+      const { uploaderId, file } = dto;
+
+      const fileModel = await this.fileService.saveFile(file, uploaderId);
+      const oldInfo = await this.model.findByIdAndUpdate(uploaderId, {
+        avatar: fileModel.id,
+      });
+      // 删除旧头像文件
+      if (oldInfo.avatar)
+        await this.fileService.delete({ ids: [oldInfo.avatar] });
+
+      return fileModel.path;
+    } catch (err) {
+      console.log(err);
       throw new MongooseExceptions(err);
     }
   }
