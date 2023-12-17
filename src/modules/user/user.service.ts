@@ -8,6 +8,7 @@ import { BcryptService } from '../../services/bcrypt.service';
 import { Role } from '../auth/role.enum';
 import MongoUtils from '../../common/mongo-utils';
 import { FileService } from '../file/file.service';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class UserService {
@@ -17,16 +18,12 @@ export class UserService {
   async create(createUserDto: CreateUserDto) {
     try {
       const password = this.bcryptService.encodePassword(createUserDto.password);
-      let roles =
-        createUserDto.roles.indexOf(Role.User) === -1
-          ?
-          [Role.User].concat(createUserDto.roles)
-          :
-          createUserDto.roles;
-      const user = new this.model({ ...createUserDto, password, roles });
+      const user = new this.model({ ...createUserDto, password });
       if (!createUserDto.username) user.username = 'user_' + user._id.toString().slice(-4);
+      user.registerTime = dayjs().valueOf()
       await user.save();
     } catch (err) {
+      console.log(err);
       throw new MongooseExceptions(err);
     }
   }

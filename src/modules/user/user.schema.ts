@@ -20,19 +20,38 @@ export class User {
   })
   avatar: string;
 
-  @Prop()
+  @Prop({
+    default: null,
+  })
   description: string;
 
   @Prop()
-  registerTime: string;
+  registerTime: number;
 
   @Prop({
     default: [Role.User],
   })
   roles: Role[];
 
-  @Prop()
+  @Prop({
+    default: null,
+  })
   career: string;
+
+  @Prop({
+    default: null,
+  })
+  city: string;
+
+  @Prop({
+    default: null,
+  })
+  company: string;
+
+  @Prop({
+    default: null,
+  })
+  website: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
