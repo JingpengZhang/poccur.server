@@ -8,6 +8,7 @@ import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { FileModule } from './modules/file/file.module';
 import { TagModule } from './modules/tag.module';
+import MongooseTransformPlugin from './plugins/mongoose-transform.plugin';
 
 @Module({
   imports: [
@@ -17,10 +18,14 @@ import { TagModule } from './modules/tag.module';
     AdminModule,
     FileModule,
     TagModule,
-    MongooseModule.forRoot('mongodb://127.0.0.1:27017/poccur'),
+    MongooseModule.forRoot('mongodb://127.0.0.1:27017/poccur', {
+      connectionFactory: (connection) => {
+        connection.plugin(MongooseTransformPlugin);
+        return connection
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {
-}
+export class AppModule {}

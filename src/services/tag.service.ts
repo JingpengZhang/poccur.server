@@ -4,13 +4,10 @@ import { Tag } from '../schemas/tag.schema';
 import { Model, QueryOptions, Types } from 'mongoose';
 import { CreateTagDto, UpdateTagDto } from '../dto/tag.dto';
 import { DeleteDocsDto } from '../dto/common.dto';
-import MongoUtils from '../common/mongo-utils';
 
 @Injectable()
 export class TagService {
-  constructor(@InjectModel(Tag.name) private model: Model<Tag>) {
-  }
-
+  constructor(@InjectModel(Tag.name) private model: Model<Tag>) {}
 
   async create(dto: CreateTagDto) {
     const tagModel = new this.model(dto);
@@ -29,17 +26,16 @@ export class TagService {
     if (all) {
       const allTagDoc = await this.model.find({});
       deleteArr = [];
-      allTagDoc.forEach(item => {
+      allTagDoc.forEach((item) => {
         deleteArr.push(item._id);
       });
-      console.log(deleteArr);
     }
     const result = await this.model.deleteMany({ _id: { $in: deleteArr } });
     return result.deletedCount;
   }
 
   async list(dto: QueryOptions) {
-    return MongoUtils.formatDocs(await this.model.find({}, null, dto));
+    return this.model.find({}, null, dto).populate('creator', 'username id');
   }
 
   async count() {
