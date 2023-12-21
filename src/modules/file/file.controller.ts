@@ -1,15 +1,13 @@
 import { Body, Controller, Post, Req, UsePipes } from '@nestjs/common';
 import { FileService } from './file.service';
 import { FastifyRequest } from 'fastify';
-import { Public } from '../../decorators/public.decorator';
-import { DeleteFilesDto } from './file.dto';
-import { JoiValidationPipe } from '../../pipes/joi-validation.pipe';
-import { deleteFilesSchema } from './file.joi.schema';
+import { JoiValidationPipe } from '../../common/pipes/joi-validation.pipe';
+import { deleteDocsJoi } from '../../common/joi/delete-docs.joi';
+import { DeleteDocsDto } from '../../common/dto/delete-docs.dto';
 
 @Controller('file')
 export class FileController {
-  constructor(private readonly service: FileService) {
-  }
+  constructor(private readonly service: FileService) {}
 
   @Post('upload')
   async upload(@Req() request: FastifyRequest) {
@@ -29,11 +27,10 @@ export class FileController {
   }
 
   @Post('delete')
-  @UsePipes(new JoiValidationPipe(deleteFilesSchema))
-  async delete(@Body() body: DeleteFilesDto) {
+  @UsePipes(new JoiValidationPipe(deleteDocsJoi))
+  async delete(@Body() body: DeleteDocsDto) {
     return {
       deleteCount: await this.service.delete(body),
     };
   }
-
 }

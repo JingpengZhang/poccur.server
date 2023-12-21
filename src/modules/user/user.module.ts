@@ -3,7 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './user.schema';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { BcryptService } from '../../services/bcrypt.service';
+import { BcryptService } from '../../common/services/bcrypt.service';
 import { FileModule } from '../file/file.module';
 
 @Module({
@@ -20,6 +20,4 @@ import { FileModule } from '../file/file.module';
   providers: [UserService, BcryptService],
   exports: [UserService],
 })
-
-export class UserModule {
-}
+export class UserModule {}

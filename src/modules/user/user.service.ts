@@ -2,24 +2,34 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './user.schema';
 import { Model } from 'mongoose';
-import { CreateUserDto, FindOneUserByEmailDto, FindOneUserByIdDto, UpdateAvatarDto, UpdateUserDto } from './user.dto';
-import MongooseExceptions from '../../exceptions/MongooseExceptions';
-import { BcryptService } from '../../services/bcrypt.service';
-import { Role } from '../auth/role.enum';
-import MongoUtils from '../../common/mongo-utils';
+import MongooseExceptions from '../../common/exceptions/MongooseExceptions';
+import { BcryptService } from '../../common/services/bcrypt.service';
+import { Role } from '../../constants/role.enum';
+import MongoUtils from '../../utils/mongo-utils';
 import { FileService } from '../file/file.service';
 import * as dayjs from 'dayjs';
+import { UserCreateDto } from './dto/user.create.dto';
+import { UserFindOneByIdDto } from './dto/user.find-one-by-id.dto';
+import { UserFindOneByEmailDto } from './dto/user.find-one-by-email.dto';
+import { UserUpdateDto } from './dto/user.update.dto';
+import { UserUpdateAvatarDto } from './dto/user.update-avatar.dto';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private model: Model<User>, private bcryptService: BcryptService, private fileService: FileService) {
-  }
+  constructor(
+    @InjectModel(User.name) private model: Model<User>,
+    private bcryptService: BcryptService,
+    private fileService: FileService,
+  ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: UserCreateDto) {
     try {
-      const password = this.bcryptService.encodePassword(createUserDto.password);
+      const password = this.bcryptService.encodePassword(
+        createUserDto.password,
+      );
       const user = new this.model({ ...createUserDto, password });
-      if (!createUserDto.username) user.username = 'user_' + user._id.toString().slice(-4);
+      if (!createUserDto.username)
+        user.username = 'user_' + user._id.toString().slice(-4);
       user.registerTime = dayjs().valueOf();
       await user.save();
     } catch (err) {
@@ -28,24 +38,23 @@ export class UserService {
     }
   }
 
-  async findOneByEmail(findOneUserByEmailDto: FindOneUserByEmailDto) {
+  async findOneByEmail(findOneUserByEmailDto: UserFindOneByEmailDto) {
     try {
-      return await this.model.findOne({ email: findOneUserByEmailDto.email }).populate('avatar', 'path');
+      return await this.model
+        .findOne({ email: findOneUserByEmailDto.email })
+        .populate('avatar', 'path');
     } catch (err) {
       throw new MongooseExceptions(err);
     }
   }
 
-  async findOneById(dto: FindOneUserByIdDto) {
+  async findOneById(dto: UserFindOneByIdDto) {
     const result = await this.model.findById(dto.id).populate('avatar', 'path');
-    if (!result) throw new BadRequestException({
-      message: '用户不存在',
-    });
-    const {
-      password,
-      avatar,
-      ...rest
-    } = MongoUtils.formatDoc<any>(result);
+    if (!result)
+      throw new BadRequestException({
+        message: '用户不存在',
+      });
+    const { password, avatar, ...rest } = MongoUtils.formatDoc<any>(result);
     let profile = {};
     Object.assign(profile, rest);
     profile['avatar'] = avatar ? avatar.path : '';
@@ -54,13 +63,15 @@ export class UserService {
 
   async findSuper() {
     try {
-      return await this.model.findOne({ roles: { $elemMatch: { $eq: Role.Super } } });
+      return await this.model.findOne({
+        roles: { $elemMatch: { $eq: Role.Super } },
+      });
     } catch (err) {
       throw new MongooseExceptions(err);
     }
   }
 
-  async update(body: UpdateUserDto) {
+  async update(body: UserUpdateDto) {
     try {
       const { id, ...rest } = body;
       await this.model.findByIdAndUpdate(id, rest);
@@ -69,7 +80,7 @@ export class UserService {
     }
   }
 
-  async updateAvatar(dto: UpdateAvatarDto) {
+  async updateAvatar(dto: UserUpdateAvatarDto) {
     try {
       const { uploaderId, file } = dto;
 

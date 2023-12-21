@@ -1,14 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { FileType } from '../../common/file-type-enums';
 import { Types } from 'mongoose';
 import { User } from '../user/user.schema';
-import { Folder } from '../client/folder/folder.schema';
+import { Folder } from '../folder/folder.schema';
+import { FileType } from '../../constants/file-type.enum';
 
 export interface FileExtraProperty {
   thumb?: string; // id
   width?: number;
   height?: number;
-
 }
 
 @Schema()
@@ -45,9 +44,6 @@ export class File {
   })
   extra: FileExtraProperty;
 
-  @Prop({ required: true })
-  uploadTime: string;
-
   @Prop({ default: '' })
   description: string;
 
@@ -67,7 +63,6 @@ export class File {
 
   @Prop()
   storagePath: string;
-
 }
 
 export const FileSchema = SchemaFactory.createForClass(File);

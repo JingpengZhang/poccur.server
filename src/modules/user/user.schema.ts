@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Role } from '../auth/role.enum';
+import { Role } from '../../constants/role.enum';
 import { Types } from 'mongoose';
 
 @Schema()
@@ -18,7 +18,7 @@ export class User {
     type: Types.ObjectId,
     ref: 'File',
   })
-  avatar: string;
+  avatar: Types.ObjectId;
 
   @Prop({
     default: null,

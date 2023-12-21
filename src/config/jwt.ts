@@ -1,0 +1,3 @@
+export const jwt = {
+  secret: 'POCCUR POCCUR IAM JINGPENGZHANG UP UP UP DAY DAY UP LOVE LIFE.',
+};

@@ -4,8 +4,8 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { TransformInterceptor } from './interceptors/transform.interceptor';
-import { HttpExceptionFilter } from './filters/http-exception-filter.filter';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception-filter.filter';
 import fastifyMultipart from '@fastify/multipart';
 import * as fastifyStatic from '@fastify/static';
 import * as path from 'path';

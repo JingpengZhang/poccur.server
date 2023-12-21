@@ -1,28 +1,39 @@
-import { Body, Controller, Get, Post, Query, Req, UsePipes } from '@nestjs/common';
-import { JoiValidationPipe } from '../../pipes/joi-validation.pipe';
-import { createUserSchema, findOneByIdSchema, updateUserSchema } from './user.joi.schema';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  UsePipes,
+} from '@nestjs/common';
+import { JoiValidationPipe } from '../../common/pipes/joi-validation.pipe';
 import { UserService } from './user.service';
-import { CreateUserDto, FindOneUserByIdDto, UpdateUserDto } from './user.dto';
-import { Public } from '../../decorators/public.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { FastifyRequest } from 'fastify';
+import { userCreateJoi } from './joi/user.create.joi';
+import { UserCreateDto } from './dto/user.create.dto';
+import { UserFindOneByIdDto } from './dto/user.find-one-by-id.dto';
+import { userFindOneByIdJoi } from './joi/user.find-one-by-id.joi';
+import { userUpdateJoi } from './joi/user.update.joi';
+import { UserUpdateDto } from './dto/user.update.dto';
 
 @Controller('/user')
 export class UserController {
-  constructor(private readonly service: UserService) {
-  }
+  constructor(private readonly service: UserService) {}
 
   @Post('create')
   @Public()
-  @UsePipes(new JoiValidationPipe(createUserSchema))
-  async create(@Body() body: CreateUserDto) {
+  @UsePipes(new JoiValidationPipe(userCreateJoi))
+  async create(@Body() body: UserCreateDto) {
     await this.service.create(body);
     return;
   }
 
   @Get('profile')
   @Public()
-  @UsePipes(new JoiValidationPipe(findOneByIdSchema))
-  async getProfile(@Query() query: FindOneUserByIdDto) {
+  @UsePipes(new JoiValidationPipe(userFindOneByIdJoi))
+  async getProfile(@Query() query: UserFindOneByIdDto) {
     return {
       profile: await this.service.findOneById(query),
     };
@@ -39,8 +50,8 @@ export class UserController {
 
   @Post('update')
   @Public()
-  @UsePipes(new JoiValidationPipe(updateUserSchema))
-  async update(@Body() body: UpdateUserDto) {
+  @UsePipes(new JoiValidationPipe(userUpdateJoi))
+  async update(@Body() body: UserUpdateDto) {
     await this.service.update(body);
   }
 
@@ -58,7 +69,7 @@ export class UserController {
   }
 
   @Get('get-by-id')
-  async getUserInfoById(@Query() query: FindOneUserByIdDto) {
+  async getUserInfoById(@Query() query: UserFindOneByIdDto) {
     await this.service.findOneById(query);
   }
 }
