@@ -16,7 +16,7 @@ export class CategoryController {
   }
 
   @Post('create')
-  @Roles(Role.Admin)
+  @Roles(Role.Super,Role.Admin)
   @UsePipes(new JoiValidationPipe(createCategorySchema))
   async create(@Req() request: FastifyRequest, @Body() body: CreateCategoryDto) {
     await this.service.create(body);
@@ -24,6 +24,7 @@ export class CategoryController {
   }
 
   @Post('update')
+  @Roles(Role.Super,Role.Admin)
   @UsePipes(new JoiValidationPipe(updateCategorySchema))
   async update(@Body() body: UpdateCategoryDto) {
     const result = await this.service.update(body);
@@ -44,6 +45,7 @@ export class CategoryController {
 
   // * 删除分类(提供单个和批量)
   @Post('delete')
+  @Roles(Role.Super,Role.Admin)
   @UsePipes(new JoiValidationPipe(deleteCategorySchema))
   async delete(@Body() body: DeleteCategoryDto) {
     return {

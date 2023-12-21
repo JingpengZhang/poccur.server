@@ -8,6 +8,8 @@ import { FastifyRequest } from 'fastify';
 import { DeleteDocsDto, DocsListDto } from '../dto/common.dto';
 import { deleteDocsJoiSchema } from '../joi-schema/common.joi.schema';
 import { GetListPipe } from '../pipes/get-list.pipe';
+import { Roles } from '../decorators/role.decorator';
+import { Role } from '../modules/auth/role.enum';
 
 @Controller('/tag')
 export class TagController {
@@ -15,6 +17,7 @@ export class TagController {
   }
 
   @Post('create')
+  @Roles(Role.Super,Role.Admin)
   @UsePipes(new JoiValidationPipe(createTagSchema))
   async create(@Req() request: FastifyRequest, @Body() body: Omit<CreateTagDto, 'creator'>) {
     return {
@@ -26,6 +29,7 @@ export class TagController {
   }
 
   @Post('update')
+  @Roles(Role.Super,Role.Admin)
   @UsePipes(new JoiValidationPipe(updateTagSchema))
   async update(@Body() body: UpdateTagDto) {
     await this.service.update(body);
@@ -33,6 +37,7 @@ export class TagController {
   }
 
   @Post('delete')
+  @Roles(Role.Super,Role.Admin)
   @UsePipes(new JoiValidationPipe(deleteDocsJoiSchema))
   async delete(@Body() body: DeleteDocsDto) {
     return {
