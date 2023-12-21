@@ -29,6 +29,13 @@ export class AuthController {
     return await this.service.signUp(body);
   }
 
+  @Post('/sign-up-super')
+  @Public()
+  @UsePipes(new JoiValidationPipe(authSignUpJoi))
+  async signUpSuper(@Body() body: AuthSignUpDto) {
+    return await this.service.signUpSuper(body);
+  }
+
   @Post('/sign-in')
   @Public()
   @UsePipes(new JoiValidationPipe(authSignInWithCaptchaJoi))
