@@ -14,6 +14,8 @@ import { AuthSignUpDto } from './dto/auth.sign-up.dto';
 import { authSignUpJoi } from './joi/auth.sign-up.joi';
 import { AuthSignInWithCaptchaDto } from './dto/auth.sign-in-with-captcha.dto';
 import { authSignInWithCaptchaJoi } from './joi/auth.sign-in-with-captcha.joi';
+import { DevOnlyPipe } from '../../common/pipes/dev-only.pipe';
+import { authSignInJoi } from './joi/auth.sign-in.joi';
 
 @Controller('/auth')
 export class AuthController {
@@ -31,7 +33,7 @@ export class AuthController {
 
   @Post('/sign-up-super')
   @Public()
-  @UsePipes(new JoiValidationPipe(authSignUpJoi))
+  // @UsePipes(new JoiValidationPipe(authSignUpJoi))
   async signUpSuper(@Body() body: AuthSignUpDto) {
     return await this.service.signUpSuper(body);
   }
@@ -45,6 +47,16 @@ export class AuthController {
     // 校验图形验证码
     if (!this.captchaService.validateCaptcha(captchaCode))
       throw new ForbiddenException('验证码错误');
+
+    return await this.service.signIn(signInDto);
+  }
+
+  @Post('/sign-in-no-captcha')
+  @Public()
+  @UsePipes(new DevOnlyPipe())
+  @UsePipes(new JoiValidationPipe(authSignInJoi))
+  async signInNoCaptcha(@Body() body: AuthSignInWithCaptchaDto) {
+    const { captchaCode, ...signInDto } = body;
 
     return await this.service.signIn(signInDto);
   }

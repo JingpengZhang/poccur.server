@@ -9,21 +9,25 @@ import { TagModule } from './modules/tag/tag.module';
 import MongooseTransformPlugin from './common/plugins/mongoose-transform.plugin';
 import { AdminMenuModule } from './modules/admin-menu/admin-menu.module';
 import { CategoryModule } from './modules/category/category.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-    AdminMenuModule,
-    UserModule,
-    AuthModule,
-    CategoryModule,
-    FileModule,
-    TagModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     MongooseModule.forRoot('mongodb://127.0.0.1:27017/poccur', {
       connectionFactory: (connection) => {
         connection.plugin(MongooseTransformPlugin);
         return connection;
       },
     }),
+    AdminMenuModule,
+    UserModule,
+    AuthModule,
+    CategoryModule,
+    FileModule,
+    TagModule,
   ],
   controllers: [AppController],
   providers: [AppService],
