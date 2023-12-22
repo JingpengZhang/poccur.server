@@ -13,6 +13,7 @@ import { UserFindOneByIdDto } from './dto/user.find-one-by-id.dto';
 import { UserFindOneByEmailDto } from './dto/user.find-one-by-email.dto';
 import { UserUpdateDto } from './dto/user.update.dto';
 import { UserUpdateAvatarDto } from './dto/user.update-avatar.dto';
+import { DocsListDto } from '../../common/dto/docs-list.dto';
 
 @Injectable()
 export class UserService {
@@ -97,5 +98,13 @@ export class UserService {
       console.log(err);
       throw new MongooseExceptions(err);
     }
+  }
+
+  async list(dto: DocsListDto) {
+    return this.model.find({}, null, dto).select('-password');
+  }
+
+  async count() {
+    return this.model.countDocuments();
   }
 }

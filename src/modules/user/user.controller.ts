@@ -17,6 +17,9 @@ import { UserFindOneByIdDto } from './dto/user.find-one-by-id.dto';
 import { userFindOneByIdJoi } from './joi/user.find-one-by-id.joi';
 import { userUpdateJoi } from './joi/user.update.joi';
 import { UserUpdateDto } from './dto/user.update.dto';
+import { DocsListDto } from '../../common/dto/docs-list.dto';
+import { getListJoi } from '../../common/joi/get-list.joi';
+import { GetListPipe } from '../../common/pipes/get-list.pipe';
 
 @Controller('/user')
 export class UserController {
@@ -71,5 +74,14 @@ export class UserController {
   @Get('get-by-id')
   async getUserInfoById(@Query() query: UserFindOneByIdDto) {
     await this.service.findOneById(query);
+  }
+
+  @Get('list')
+  @UsePipes(new JoiValidationPipe(getListJoi))
+  async list(@Query(new GetListPipe()) query: DocsListDto) {
+    return {
+      list: await this.service.list(query),
+      total: await this.service.count(),
+    };
   }
 }
