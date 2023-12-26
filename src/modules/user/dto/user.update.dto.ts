@@ -1,7 +1,7 @@
 import { Role } from '../../../constants/role.enum';
 
 export interface UserUpdateDto {
-  id: string;
+  id: number;
   username?: string;
   roles?: Role[];
   description?: string;

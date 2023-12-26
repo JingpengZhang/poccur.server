@@ -1,4 +1,4 @@
-import { Schema } from 'mongoose';
+import { get, Schema } from 'mongoose';
 
 const MongooseTransformPlugin = (schema: Schema) => {
   schema.set('toJSON', {
@@ -9,6 +9,10 @@ const MongooseTransformPlugin = (schema: Schema) => {
     },
   });
   schema.set('timestamps', true);
+  schema.virtual('id').get(function () {
+    // @ts-ignore
+    return this._id.toHexString();
+  });
 };
 
 export default MongooseTransformPlugin;

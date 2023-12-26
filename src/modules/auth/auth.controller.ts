@@ -17,28 +17,28 @@ import { authSignInWithCaptchaJoi } from './joi/auth.sign-in-with-captcha.joi';
 import { DevOnlyPipe } from '../../common/pipes/dev-only.pipe';
 import { authSignInJoi } from './joi/auth.sign-in.joi';
 
-@Controller('/auth')
+@Controller('auth')
 export class AuthController {
   constructor(
     private readonly service: AuthService,
     private readonly captchaService: CaptchaService,
   ) {}
 
-  @Post('/sign-up')
+  @Post('sign-up')
   @Public()
   @UsePipes(new JoiValidationPipe(authSignUpJoi))
   async signUp(@Body() body: AuthSignUpDto) {
     return await this.service.signUp(body);
   }
 
-  @Post('/sign-up-super')
+  @Post('sign-up-super')
   @Public()
   // @UsePipes(new JoiValidationPipe(authSignUpJoi))
   async signUpSuper(@Body() body: AuthSignUpDto) {
     return await this.service.signUpSuper(body);
   }
 
-  @Post('/sign-in')
+  @Post('sign_in')
   @Public()
   @UsePipes(new JoiValidationPipe(authSignInWithCaptchaJoi))
   async signIn(@Body() body: AuthSignInWithCaptchaDto) {
@@ -51,7 +51,7 @@ export class AuthController {
     return await this.service.signIn(signInDto);
   }
 
-  @Post('/sign-in-no-captcha')
+  @Post('sign_in_no_captcha')
   @Public()
   @UsePipes(new DevOnlyPipe())
   @UsePipes(new JoiValidationPipe(authSignInJoi))

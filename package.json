@@ -29,6 +29,7 @@
     "@nestjs/mongoose": "^10.0.2",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/platform-fastify": "^10.2.10",
+    "@nestjs/typeorm": "^10.0.1",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
@@ -36,11 +37,15 @@
     "fastify": "^4.24.3",
     "image-size": "^1.0.2",
     "joi": "^17.11.0",
+    "mongodb": "^6.3.0",
     "mongoose": "^8.0.2",
+    "mysql2": "^3.6.5",
     "nanoid": "3",
+    "pinyin-pro": "^3.18.5",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "svg-captcha": "^1.4.0"
+    "svg-captcha": "^1.4.0",
+    "typeorm": "^0.3.17"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

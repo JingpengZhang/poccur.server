@@ -20,48 +20,48 @@ import { UserUpdateDto } from './dto/user.update.dto';
 import { DocsListDto } from '../../common/dto/docs-list.dto';
 import { getListJoi } from '../../common/joi/get-list.joi';
 import { GetListPipe } from '../../common/pipes/get-list.pipe';
+import { DeleteDocsDto } from '../../common/dto/delete-docs.dto';
+import { deleteDocsJoi } from '../../common/joi/delete-docs.joi';
+import { ListDto } from '../../common/dto/list.dto';
+import { listJoi } from '../../common/joi/list.joi';
+import { DeleteDto } from '../../common/dto/delete.dto';
+import { DevOnlyPipe } from '../../common/pipes/dev-only.pipe';
+import { deleteQueryJoi } from '../../common/joi/delete-query.joi';
 
-@Controller('/user')
+@Controller('user')
 export class UserController {
   constructor(private readonly service: UserService) {}
 
   @Post('create')
-  @Public()
   @UsePipes(new JoiValidationPipe(userCreateJoi))
   async create(@Body() body: UserCreateDto) {
     await this.service.create(body);
     return;
   }
 
-  @Get('profile')
-  @Public()
-  @UsePipes(new JoiValidationPipe(userFindOneByIdJoi))
-  async getProfile(@Query() query: UserFindOneByIdDto) {
-    return {
-      profile: await this.service.findOneById(query),
-    };
+  @Post('delete')
+  @UsePipes(new JoiValidationPipe(deleteQueryJoi))
+  async delete(@Body() body: DeleteDto) {
+    return this.service.delete(body);
   }
 
-  @Post('current-user-profile')
-  async getCurrentUserProfile(@Req() request: FastifyRequest) {
-    return {
-      profile: await this.service.findOneById({
-        id: request['user'].id,
-      }),
-    };
+  @Post('delete_all')
+  @UsePipes(new DevOnlyPipe())
+  async deleteAll() {
+    return this.service.deleteAll();
   }
 
   @Post('update')
-  @Public()
   @UsePipes(new JoiValidationPipe(userUpdateJoi))
   async update(@Body() body: UserUpdateDto) {
     await this.service.update(body);
   }
 
-  @Post('update-avatar')
+  @Post('update_avatar')
   async updateAvatar(@Req() request: FastifyRequest) {
     const file = await request.file();
-    const uploaderId = request['user'].id;
+    // const uploaderId = request['user'].id;
+    const uploaderId = 12;
     const path = await this.service.updateAvatar({
       uploaderId,
       file,
@@ -71,17 +71,24 @@ export class UserController {
     };
   }
 
-  @Get('get-by-id')
-  async getUserInfoById(@Query() query: UserFindOneByIdDto) {
-    await this.service.findOneById(query);
+  @Get('profile')
+  @UsePipes(new JoiValidationPipe(userFindOneByIdJoi))
+  async getProfile(@Query() query: UserFindOneByIdDto) {
+    return {
+      profile: await this.service.getUserProfile(query.id),
+    };
+  }
+
+  @Get('current_user_profile')
+  async getCurrentUserProfile(@Req() request: FastifyRequest) {
+    return {
+      profile: await this.service.getUserProfile(request['user'].id),
+    };
   }
 
   @Get('list')
-  @UsePipes(new JoiValidationPipe(getListJoi))
-  async list(@Query(new GetListPipe()) query: DocsListDto) {
-    return {
-      list: await this.service.list(query),
-      total: await this.service.count(),
-    };
+  @UsePipes(new JoiValidationPipe(listJoi))
+  async findOne(@Query() query: ListDto) {
+    return await this.service.getList(query);
   }
 }

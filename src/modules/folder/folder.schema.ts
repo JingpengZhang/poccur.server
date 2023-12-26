@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
-import { User } from '../user/user.schema';
+
+// import { User } from '../user/user.schema';
 
 @Schema()
 export class Folder {
@@ -16,13 +17,13 @@ export class Folder {
 
   @Prop({ default: '' })
   description: string;
-
-  @Prop({
-    default: null,
-    type: Types.ObjectId,
-    ref: 'User',
-  })
-  creator: User;
+  //
+  // @Prop({
+  //   default: null,
+  //   type: Types.ObjectId,
+  //   ref: 'User',
+  // })
+  // creator: User;
 }
 
 export const FolderSchema = SchemaFactory.createForClass(Folder);

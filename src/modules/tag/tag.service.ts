@@ -1,43 +1,59 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Tag } from './tag.schema';
 import { Model, QueryOptions, Types } from 'mongoose';
 import { DeleteDocsDto } from '../../common/dto/delete-docs.dto';
 import { TagCreateDto } from './dto/tag.create.dto';
 import { TagUpdateDto } from './dto/tag.update.dto';
+import { GenericService } from '../../common/services/generic.service';
+import { Tag } from './tag.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { pinyin } from 'pinyin-pro';
+import { QueryFailedExceptions } from '../../common/exceptions/query-failed-exceptions';
 
 @Injectable()
-export class TagService {
-  constructor(@InjectModel(Tag.name) private model: Model<Tag>) {}
+export class TagService extends GenericService<Tag> {
+  constructor(
+    @InjectRepository(Tag)
+    private repository: Repository<Tag>,
+  ) {
+    super(repository);
+  }
 
   async create(dto: TagCreateDto) {
-    const tagModel = new this.model(dto);
-    const tag = await tagModel.save();
-    return tag._id;
+    try {
+      let alias = dto.alias || pinyin(dto.name, { type: 'array' }).join('_');
+
+      let index = 1;
+
+      while (
+        (
+          await this.repository.findBy({
+            alias: (alias + '_' + index).toLowerCase(),
+          })
+        ).length !== 0
+      ) {
+        index++;
+      }
+
+      alias = (index === 1 ? alias : alias + '_' + index).toLowerCase();
+
+      const tag = new Tag();
+      tag.name = dto.name;
+      tag.alias = alias;
+      Object.assign(tag, dto);
+
+      return await this.repository.save(tag);
+    } catch (err) {
+      throw new QueryFailedExceptions(err);
+    }
   }
 
   async update(dto: TagUpdateDto) {
     const { id, ...rest } = dto;
-    await this.model.findByIdAndUpdate(id, rest);
-  }
-
-  async delete(dto: DeleteDocsDto) {
-    const { ids, all } = dto;
-    let deleteArr: Types.ObjectId[] = ids;
-    if (all) {
-      const allTagDoc = await this.model.find({});
-      deleteArr = [];
-      allTagDoc.forEach((item) => {});
-    }
-    const result = await this.model.deleteMany({ _id: { $in: deleteArr } });
-    return result.deletedCount;
-  }
-
-  async list(dto: QueryOptions) {
-    return this.model.find({}, null, dto).populate('creator', 'username id');
-  }
-
-  async count() {
-    return this.model.countDocuments();
+    const tag = await this.findOneById(dto.id);
+    if (!tag) throw new NotFoundException('Tag not found');
+    Object.assign(tag, rest);
+    await this.repository.save(tag);
   }
 }

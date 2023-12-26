@@ -1,110 +1,131 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { User } from './user.schema';
-import { Model } from 'mongoose';
-import MongooseExceptions from '../../common/exceptions/MongooseExceptions';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { BcryptService } from '../../common/services/bcrypt.service';
 import { Role } from '../../constants/role.enum';
-import MongoUtils from '../../utils/mongo-utils';
 import { FileService } from '../file/file.service';
-import * as dayjs from 'dayjs';
-import { UserCreateDto } from './dto/user.create.dto';
-import { UserFindOneByIdDto } from './dto/user.find-one-by-id.dto';
-import { UserFindOneByEmailDto } from './dto/user.find-one-by-email.dto';
-import { UserUpdateDto } from './dto/user.update.dto';
 import { UserUpdateAvatarDto } from './dto/user.update-avatar.dto';
-import { DocsListDto } from '../../common/dto/docs-list.dto';
+import { GenericService } from '../../common/services/generic.service';
+import { Raw, Repository } from 'typeorm';
+import { User } from './user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserCreateDto } from './dto/user.create.dto';
+import { nanoid } from 'nanoid';
+import { UserUpdateDto } from './dto/user.update.dto';
+import { ListDto } from '../../common/dto/list.dto';
+import { QueryFailedExceptions } from '../../common/exceptions/query-failed-exceptions';
 
 @Injectable()
-export class UserService {
+export class UserService extends GenericService<User> {
   constructor(
-    @InjectModel(User.name) private model: Model<User>,
+    @InjectRepository(User)
+    private repository: Repository<User>,
     private bcryptService: BcryptService,
     private fileService: FileService,
-  ) {}
+  ) {
+    super(repository);
+  }
 
   async create(createUserDto: UserCreateDto) {
     try {
       const password = this.bcryptService.encodePassword(
         createUserDto.password,
       );
-      const user = new this.model({ ...createUserDto, password });
-      if (!createUserDto.username)
-        user.username = 'user_' + user._id.toString().slice(-4);
-      user.registerTime = dayjs().valueOf();
-      await user.save();
+      const user = new User();
+      user.username = 'user_' + nanoid(4);
+      user.email = createUserDto.email;
+      user.password = password;
+      user.roles = [Role.User as unknown as string];
+      await this.repository.save(user);
     } catch (err) {
-      console.log(err);
-      throw new MongooseExceptions(err);
+      throw new QueryFailedExceptions(err, '该邮箱已被注册');
     }
   }
 
-  async findOneByEmail(findOneUserByEmailDto: UserFindOneByEmailDto) {
-    try {
-      return await this.model
-        .findOne({ email: findOneUserByEmailDto.email })
-        .populate('avatar', 'path');
-    } catch (err) {
-      throw new MongooseExceptions(err);
-    }
+  async update(dto: UserUpdateDto) {
+    const { id, ...rest } = dto;
+    const user = await this.findOneById(dto.id);
+    if (!user) throw new NotFoundException('User not found');
+    Object.assign(user, rest);
+    await this.repository.save(user);
   }
 
-  async findOneById(dto: UserFindOneByIdDto) {
-    const result = await this.model.findById(dto.id).populate('avatar', 'path');
-    if (!result)
+  async getList(dto: ListDto) {
+    return await this.list(dto, {
+      relations: {
+        avatar: true,
+      },
+      select: {
+        avatar: {
+          path: true,
+        },
+      },
+    });
+  }
+
+  async findOneByEmail(email: string) {
+    return await this.repository.findOneBy({
+      email: email,
+    });
+  }
+
+  async getUserProfile(id: number) {
+    console.log(id);
+    const user = await this.repository.findOne({
+      where: {
+        id,
+      },
+      relations: {
+        avatar: true,
+      },
+      select: {
+        avatar: {
+          path: true,
+        },
+        password: false,
+      },
+    });
+    if (!user)
       throw new BadRequestException({
         message: '用户不存在',
       });
-    const { password, avatar, ...rest } = MongoUtils.formatDoc<any>(result);
-    let profile = {};
-    Object.assign(profile, rest);
-    profile['avatar'] = avatar ? avatar.path : '';
-    return profile;
+
+    return user;
   }
 
   async findSuper() {
-    try {
-      return await this.model.findOne({
-        roles: { $elemMatch: { $eq: Role.Super } },
-      });
-    } catch (err) {
-      throw new MongooseExceptions(err);
-    }
-  }
-
-  async update(body: UserUpdateDto) {
-    try {
-      const { id, ...rest } = body;
-      await this.model.findByIdAndUpdate(id, rest);
-    } catch (err) {
-      throw new MongooseExceptions(err);
-    }
+    return await this.repository.findOne({
+      where: {
+        roles: Raw(
+          (roles) => `JSON_CONTAINS(roles ,JSON_Array(${Role.Super}))`,
+        ),
+      },
+    });
   }
 
   async updateAvatar(dto: UserUpdateAvatarDto) {
-    try {
-      const { uploaderId, file } = dto;
+    const file = await this.fileService.saveFile(dto.file, dto.uploaderId);
 
-      const fileModel = await this.fileService.saveFile(file, uploaderId);
-      const oldInfo = await this.model.findByIdAndUpdate(uploaderId, {
-        avatar: fileModel.id,
-      });
-      // 删除旧头像文件
-      if (oldInfo.avatar)
-        await this.fileService.delete({ ids: [oldInfo.avatar] });
+    const user = await this.repository.findOne({
+      where: {
+        id: dto.uploaderId,
+      },
+      relations: {
+        avatar: true,
+      },
+      select: {
+        avatar: {
+          id: true,
+        },
+      },
+    });
 
-      return fileModel.path;
-    } catch (err) {
-      console.log(err);
-      throw new MongooseExceptions(err);
-    }
-  }
+    if (user.avatar.id) await this.fileService.delete(user.avatar.id);
 
-  async list(dto: DocsListDto) {
-    return this.model.find({}, null, dto).select('-password');
-  }
+    user.avatar = file;
 
-  async count() {
-    return this.model.countDocuments();
+    return await this.repository.save(user);
   }
 }

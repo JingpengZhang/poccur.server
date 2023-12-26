@@ -4,4 +4,6 @@ import * as Joi from 'joi';
 
 export const tagCreateJoi: JoiObject<TagCreateDto> = Joi.object({
   name: Joi.string().required(),
+  alias: Joi.string(),
+  description: Joi.string(),
 });

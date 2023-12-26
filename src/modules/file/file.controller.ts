@@ -1,19 +1,32 @@
-import { Body, Controller, Post, Req, UsePipes } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  UsePipes,
+} from '@nestjs/common';
 import { FileService } from './file.service';
 import { FastifyRequest } from 'fastify';
 import { JoiValidationPipe } from '../../common/pipes/joi-validation.pipe';
-import { deleteDocsJoi } from '../../common/joi/delete-docs.joi';
-import { DeleteDocsDto } from '../../common/dto/delete-docs.dto';
+import { ListDto } from '../../common/dto/list.dto';
+import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
+import { deleteQueryJoi } from '../../common/joi/delete-query.joi';
+import { DevOnlyPipe } from '../../common/pipes/dev-only.pipe';
+import { Public } from '../../common/decorators/public.decorator';
 
 @Controller('file')
 export class FileController {
   constructor(private readonly service: FileService) {}
 
   @Post('upload')
+  @Public()
   async upload(@Req() request: FastifyRequest) {
     const data = await request.file();
+    // request['user'].id
     return {
-      info: await this.service.saveFile(data, request['user'].id),
+      info: await this.service.saveFile(data, 6),
     };
   }
 
@@ -27,10 +40,20 @@ export class FileController {
   }
 
   @Post('delete')
-  @UsePipes(new JoiValidationPipe(deleteDocsJoi))
-  async delete(@Body() body: DeleteDocsDto) {
-    return {
-      deleteCount: await this.service.delete(body),
-    };
+  @UsePipes(new JoiValidationPipe(deleteQueryJoi))
+  async delete(@Body() body: DeleteQueryDto) {
+    return await this.service.deleteFiles(body);
+  }
+
+  @Post('delete_all')
+  @Public()
+  @UsePipes(new DevOnlyPipe())
+  async deleteAll() {
+    return await this.service.deleteAllFiles();
+  }
+
+  @Get('list')
+  async listWithUploader(@Query() query: ListDto) {
+    return await this.service.getList(query);
   }
 }

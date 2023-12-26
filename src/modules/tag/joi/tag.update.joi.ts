@@ -4,6 +4,8 @@ import * as Joi from 'joi';
 import { idJoi } from '../../../common/joi/id.joi';
 import { tagCreateJoi } from './tag.create.joi';
 
-export const tagUpdateJoi: JoiObject<TagUpdateDto> = Joi.object({})
-  .concat(idJoi)
-  .concat(tagCreateJoi);
+export const tagUpdateJoi: JoiObject<TagUpdateDto> = Joi.object({
+  name: Joi.string().required(),
+  alias: Joi.string(),
+  description: Joi.string(),
+}).concat(idJoi);

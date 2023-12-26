@@ -2,7 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { BcryptService } from '../../common/services/bcrypt.service';
 import { JwtService } from '@nestjs/jwt';
-import MongooseExceptions from '../../common/exceptions/MongooseExceptions';
 import { AuthSignUpDto } from './dto/auth.sign-up.dto';
 import { AuthSignInDto } from './dto/auth.sign-in.dto';
 import { Role } from '../../constants/role.enum';
@@ -15,32 +14,28 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signIn(signInDto: AuthSignInDto) {
-    try {
-      const userInfo = await this.userService.findOneByEmail(signInDto);
-      if (
-        !userInfo ||
-        !this.bcryptService.comparePassword(
-          signInDto.password,
-          userInfo.password,
-        )
-      )
-        new BadRequestException('登陆失败,用户名或密码错误');
+  async signIn(dto: AuthSignInDto) {
+    const user = await this.userService.findOneByEmail(dto.email);
+    if (
+      !user ||
+      !this.bcryptService.comparePassword(dto.password, user.password)
+    )
+      throw new BadRequestException('登陆失败,用户名或密码错误');
 
-      return {
-        token: await this.jwtService.signAsync({
-          id: userInfo._id,
-          email: userInfo.email,
-          roles: userInfo.roles,
-        }),
-      };
-    } catch (err) {
-      throw new MongooseExceptions(err);
-    }
+    return {
+      token: await this.jwtService.signAsync({
+        id: user.id,
+        email: user.email,
+        roles: user.roles,
+      }),
+    };
   }
+
+  '';
 
   async signUp(signUpDto: AuthSignUpDto) {
     const { autoSignIn, ...rest } = signUpDto;
+
     await this.userService.create(rest);
     if (autoSignIn) {
       return await this.signIn(rest);
@@ -52,7 +47,8 @@ export class AuthService {
     const superUser = await this.userService.findSuper();
     if (superUser)
       throw new BadRequestException('Super 用户已存在,请勿重复注册');
-    dto.roles = [Role.Super];
+
+    dto.roles = [Role.User, Role.Super];
     return await this.signUp(dto);
   }
 }

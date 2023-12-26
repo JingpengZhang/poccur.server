@@ -1,3 +1,6 @@
 export interface TagUpdateDto {
-  id: string;
+  id: number;
+  name?: string;
+  alias?: string;
+  description?: string;
 }

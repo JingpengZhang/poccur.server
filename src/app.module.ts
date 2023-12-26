@@ -10,6 +10,8 @@ import MongooseTransformPlugin from './common/plugins/mongoose-transform.plugin'
 import { AdminMenuModule } from './modules/admin-menu/admin-menu.module';
 import { CategoryModule } from './modules/category/category.module';
 import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './modules/user/user.entity';
 
 @Module({
   imports: [
@@ -22,10 +24,20 @@ import { ConfigModule } from '@nestjs/config';
         return connection;
       },
     }),
-    AdminMenuModule,
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: 'localhost',
+      port: 3306,
+      username: 'root',
+      password: 'zhang123456',
+      database: 'poccur',
+      synchronize: true,
+      autoLoadEntities: true,
+    }),
+    // AdminMenuModule,
     UserModule,
     AuthModule,
-    CategoryModule,
+    // CategoryModule,
     FileModule,
     TagModule,
   ],

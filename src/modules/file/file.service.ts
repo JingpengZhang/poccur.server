@@ -4,23 +4,26 @@ import * as fs from 'fs';
 import FileUtils from '../../utils/file-utils';
 import * as dayjs from 'dayjs';
 import { customAlphabet } from 'nanoid';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { File, FileExtraProperty } from './file.schema';
+// import { File, FileExtraProperty } from './file.schema';
 import * as util from 'util';
 import { pipeline } from 'stream';
-import MongooseExceptions from '../../common/exceptions/MongooseExceptions';
-import MongoUtils from '../../utils/mongo-utils';
 import { FileType } from '../../constants/file-type.enum';
-import { DeleteDocsDto } from '../../common/dto/delete-docs.dto';
+import { File, FileExtraProperty } from './file.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { GenericService } from '../../common/services/generic.service';
+import { ListDto } from '../../common/dto/list.dto';
+import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
 
 const pump = util.promisify(pipeline);
 
 @Injectable()
-export class FileService {
-  constructor(@InjectModel(File.name) private model: Model<File>) {}
+export class FileService extends GenericService<File> {
+  constructor(@InjectRepository(File) private repository: Repository<File>) {
+    super(repository);
+  }
 
-  async saveFile(file: MultipartFile, uploaderId: string) {
+  async saveFile(file: MultipartFile, uploaderId: number) {
     const { name, extension } = FileUtils.splitFileNameAndExtension(
       file.filename,
     );
@@ -48,63 +51,88 @@ export class FileService {
     // 存储文件信息到数据库
     const publicPath = filePath.replace('./storage', '/public');
 
-    const modelInfo = {
-      path: publicPath,
-      filename: fileName,
-      type: fileType,
-      filesize: fileStat.size,
-      extension: extension,
-      uploadTime: now.valueOf(),
-      uploader: uploaderId,
-      storagePath: filePath,
-      extra: {},
-    };
+    const fileEntity = new File();
+    fileEntity.path = publicPath;
+    fileEntity.filename = fileName;
+    fileEntity.type = fileType;
+    fileEntity.filesize = fileStat.size;
+    fileEntity.extension = extension;
+    // @ts-ignore
+    fileEntity.uploader = uploaderId;
+    fileEntity.storagePath = filePath;
+    fileEntity.extra = {};
+
+    // const modelInfo = {
+    //   path: publicPath,
+    //   filename: fileName,
+    //   type: fileType,
+    //   filesize: fileStat.size,
+    //   extension: extension,
+    //   uploadTime: now.valueOf(),
+    //   uploader: uploaderId,
+    //   storagePath: filePath,
+    //   extra: {},
+    // };
 
     if (fileType === FileType.Image) {
       const dimensions = FileUtils.getImageDimensions(filePath);
-      (modelInfo.extra as FileExtraProperty).width = dimensions.width;
-      (modelInfo.extra as FileExtraProperty).height = dimensions.height;
+      (fileEntity.extra as FileExtraProperty).width = dimensions.width;
+      (fileEntity.extra as FileExtraProperty).height = dimensions.height;
     }
 
-    try {
-      const fileModel = new this.model(modelInfo);
-      await fileModel.save();
-
-      return {
-        id: fileModel._id,
-        path: publicPath,
-      };
-    } catch (err) {
-      throw new MongooseExceptions(err);
-    }
+    return await this.repository.save(fileEntity);
   }
 
   async saveFiles(
     files: AsyncIterableIterator<MultipartFile>,
-    uploaderId: string,
+    uploaderId: number,
   ) {
     const data = [];
     for await (const file of files) {
       const info = await this.saveFile(file, uploaderId);
       data.push(info);
     }
-
     return data;
   }
 
-  async delete(dto: DeleteDocsDto) {
-    const { ids } = dto;
-    let deleteCount = 0;
-    for await (const id of ids) {
-      try {
-        const doc = MongoUtils.formatDoc(await this.model.findById(id));
-        await this.model.deleteOne({ _id: id });
-        fs.rmSync(doc.storagePath);
-        deleteCount++;
-      } catch (err) {
-        throw new MongooseExceptions(err);
+  async getList(dto: ListDto) {
+    return await super.list(dto, {
+      relations: {
+        uploader: true,
+      },
+      select: {
+        uploader: {
+          id: true,
+          username: true,
+        },
+      },
+    });
+  }
+
+  async deleteFiles(dto: DeleteQueryDto) {
+    let toDeleteIds = (
+      Array.isArray(dto.data) ? dto.data : [dto.data]
+    ) as number[];
+
+    for await (const id of toDeleteIds) {
+      const file = await this.repository.findOneBy({ id });
+      if (file) {
+        fs.rmSync(file.storagePath);
       }
     }
-    return deleteCount;
+
+    return await super.delete(toDeleteIds);
+  }
+
+  async deleteAllFiles() {
+    const files = await this.repository.find();
+
+    const storagePaths = files.map((item) => item.storagePath);
+
+    for (const path of storagePaths) {
+      fs.rmSync(path);
+    }
+
+    return await super.deleteAll();
   }
 }
