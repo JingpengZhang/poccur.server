@@ -27,6 +27,7 @@ import { listJoi } from '../../common/joi/list.joi';
 import { DeleteDto } from '../../common/dto/delete.dto';
 import { DevOnlyPipe } from '../../common/pipes/dev-only.pipe';
 import { deleteQueryJoi } from '../../common/joi/delete-query.joi';
+import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
 
 @Controller('user')
 export class UserController {
@@ -41,8 +42,8 @@ export class UserController {
 
   @Post('delete')
   @UsePipes(new JoiValidationPipe(deleteQueryJoi))
-  async delete(@Body() body: DeleteDto) {
-    return this.service.delete(body);
+  async delete(@Body() body: DeleteQueryDto) {
+    return this.service.delete(body.data);
   }
 
   @Post('delete_all')
