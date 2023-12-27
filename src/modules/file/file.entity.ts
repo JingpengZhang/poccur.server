@@ -37,7 +37,7 @@ export class File extends BaseEntity {
   @Column()
   storagePath: string;
 
-  @ManyToOne(() => User, (user) => user.files)
+  @ManyToOne(() => User, (user) => user.files, { onDelete: 'CASCADE' })
   @JoinColumn()
   uploader: User;
 }

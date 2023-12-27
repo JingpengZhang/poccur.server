@@ -21,12 +21,10 @@ export class FileController {
   constructor(private readonly service: FileService) {}
 
   @Post('upload')
-  @Public()
   async upload(@Req() request: FastifyRequest) {
     const data = await request.file();
-    // request['user'].id
     return {
-      info: await this.service.saveFile(data, 6),
+      info: await this.service.saveFile(data, request['user'].id),
     };
   }
 

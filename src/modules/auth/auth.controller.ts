@@ -31,9 +31,9 @@ export class AuthController {
     return await this.service.signUp(body);
   }
 
-  @Post('sign-up-super')
+  @Post('sign_up_super')
   @Public()
-  // @UsePipes(new JoiValidationPipe(authSignUpJoi))
+  @UsePipes(new JoiValidationPipe(authSignUpJoi))
   async signUpSuper(@Body() body: AuthSignUpDto) {
     return await this.service.signUpSuper(body);
   }

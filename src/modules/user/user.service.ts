@@ -28,20 +28,46 @@ export class UserService extends GenericService<User> {
     super(repository);
   }
 
-  async create(createUserDto: UserCreateDto) {
+  async create(dto: UserCreateDto) {
     try {
-      const password = this.bcryptService.encodePassword(
-        createUserDto.password,
-      );
+      const password = this.bcryptService.encodePassword(dto.password);
       const user = new User();
       user.username = 'user_' + nanoid(4);
-      user.email = createUserDto.email;
+      user.email = dto.email;
       user.password = password;
-      user.roles = [Role.User as unknown as string];
+      user.roles = (dto.roles || [Role.User]) as unknown as string[];
       await this.repository.save(user);
     } catch (err) {
       throw new QueryFailedExceptions(err, '该邮箱已被注册');
     }
+  }
+
+  async deleteUser(id: number) {
+    const user = await this.repository.findOne({
+      where: {
+        id,
+      },
+      relations: ['files'],
+    });
+
+    await this.fileService.deleteFiles({
+      data: user.files.map((file) => file.id),
+    });
+
+    return await this.delete(id);
+  }
+
+  async deleteAllExcludeSuper() {
+    const superUser = await this.findSuper();
+
+    const users = await this.find();
+    const entitiesToDelete = superUser
+      ? users.filter((entity) => entity.id !== superUser.id)
+      : users;
+    await this.repository.remove(entitiesToDelete);
+    return {
+      count: entitiesToDelete.length,
+    };
   }
 
   async update(dto: UserUpdateDto) {
@@ -72,7 +98,6 @@ export class UserService extends GenericService<User> {
   }
 
   async getUserProfile(id: number) {
-    console.log(id);
     const user = await this.repository.findOne({
       where: {
         id,
