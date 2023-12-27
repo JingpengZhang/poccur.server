@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import FileUtils from '../../utils/file-utils';
 import * as dayjs from 'dayjs';
 import { customAlphabet } from 'nanoid';
-// import { File, FileExtraProperty } from './file.schema';
 import * as util from 'util';
 import { pipeline } from 'stream';
 import { FileType } from '../../constants/file-type.enum';
@@ -61,18 +60,6 @@ export class FileService extends GenericService<File> {
     fileEntity.uploader = uploaderId;
     fileEntity.storagePath = filePath;
     fileEntity.extra = {};
-
-    // const modelInfo = {
-    //   path: publicPath,
-    //   filename: fileName,
-    //   type: fileType,
-    //   filesize: fileStat.size,
-    //   extension: extension,
-    //   uploadTime: now.valueOf(),
-    //   uploader: uploaderId,
-    //   storagePath: filePath,
-    //   extra: {},
-    // };
 
     if (fileType === FileType.Image) {
       const dimensions = FileUtils.getImageDimensions(filePath);

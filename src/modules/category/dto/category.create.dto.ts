@@ -1,5 +1,6 @@
 export interface CategoryCreateDto {
   name: string;
-  alias: string;
+  alias?: string;
   description: string;
+  creator: string;
 }

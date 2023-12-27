@@ -1,7 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, QueryOptions, Types } from 'mongoose';
-import { DeleteDocsDto } from '../../common/dto/delete-docs.dto';
 import { TagCreateDto } from './dto/tag.create.dto';
 import { TagUpdateDto } from './dto/tag.update.dto';
 import { GenericService } from '../../common/services/generic.service';

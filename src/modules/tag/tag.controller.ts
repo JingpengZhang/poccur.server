@@ -11,22 +11,15 @@ import { TagService } from './tag.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { JoiValidationPipe } from '../../common/pipes/joi-validation.pipe';
 import { FastifyRequest } from 'fastify';
-import { GetListPipe } from '../../common/pipes/get-list.pipe';
-import { Roles } from '../../common/decorators/role.decorator';
-import { Role } from '../../constants/role.enum';
 import { tagCreateJoi } from './joi/tag.create.joi';
 import { TagCreateDto } from './dto/tag.create.dto';
 import { tagUpdateJoi } from './joi/tag.update.joi';
 import { TagUpdateDto } from './dto/tag.update.dto';
-import { deleteDocsJoi } from '../../common/joi/delete-docs.joi';
-import { DeleteDocsDto } from '../../common/dto/delete-docs.dto';
-import { getListJoi } from '../../common/joi/get-list.joi';
-import { DocsListDto } from '../../common/dto/docs-list.dto';
-import { DeleteDto } from '../../common/dto/delete.dto';
 import { deleteQueryJoi } from '../../common/joi/delete-query.joi';
 import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
 import { ListDto } from '../../common/dto/list.dto';
 import { DevOnlyPipe } from '../../common/pipes/dev-only.pipe';
+import { listJoi } from '../../common/joi/list.joi';
 
 @Controller('/tag')
 export class TagController {
@@ -74,7 +67,7 @@ export class TagController {
 
   @Get('list')
   @Public()
-  @UsePipes(new JoiValidationPipe(getListJoi))
+  @UsePipes(new JoiValidationPipe(listJoi))
   async list(@Query() query: ListDto) {
     return {
       list: await this.service.list(query),

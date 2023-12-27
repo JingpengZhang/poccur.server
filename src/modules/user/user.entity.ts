@@ -12,6 +12,7 @@ import { BaseEntity } from '../../common/entities/base.entity';
 import { Role } from '../../constants/role.enum';
 import { File } from '../file/file.entity';
 import { Tag } from '../tag/tag.entity';
+import { Category } from '../category/category.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -57,6 +58,9 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Tag, (tag) => tag.creator)
   tags: Tag[];
+
+  @OneToMany(() => Category, (category) => category.creator)
+  categories: Category[];
 
   @ManyToOne(() => File, { onDelete: 'SET NULL' })
   @JoinColumn()

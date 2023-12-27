@@ -1,80 +1,55 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Category } from 'src/modules/category/category.schema';
-import { Model, QueryOptions } from 'mongoose';
-import MongooseExceptions from '../../common/exceptions/MongooseExceptions';
 import { CategoryCreateDto } from './dto/category.create.dto';
 import { CategoryUpdateDto } from './dto/category.update.dto';
-import { DeleteDocsDto } from '../../common/dto/delete-docs.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Category } from './category.entity';
+import { Repository } from 'typeorm';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { pinyin } from 'pinyin-pro';
+import { QueryFailedExceptions } from '../../common/exceptions/query-failed-exceptions';
+import { GenericService } from '../../common/services/generic.service';
 
 @Injectable()
-export class CategoryService {
-  constructor(@InjectModel(Category.name) private model: Model<Category>) {}
-
-  // * 创建分类
-  async create(createDto: CategoryCreateDto) {
-    try {
-      const createCategory = new this.model(createDto);
-      await createCategory.save();
-    } catch (err) {
-      throw new MongooseExceptions(err);
-    }
+export class CategoryService extends GenericService<Category> {
+  constructor(
+    @InjectRepository(Category) private repository: Repository<Category>,
+  ) {
+    super(repository);
   }
 
-  // * 修改分类数据
-  async update(updateDto: CategoryUpdateDto) {
-    const { id, ...params } = updateDto;
-
+  async create(dto: CategoryCreateDto) {
     try {
-      return await this.model.findByIdAndUpdate(id, { ...params });
-    } catch (err) {
-      throw new MongooseExceptions(err);
-    }
-  }
+      let alias = dto.alias || pinyin(dto.name, { type: 'array' }).join('_');
 
-  // * 获取分类列表
-  async getList(query: QueryOptions) {
-    try {
-      const queryResult = await this.model.find({}, null, query);
-      let result = [];
-      queryResult.forEach((item) => {
-        const { _id, __v, ...rest } = item['_doc'];
-        result.push({
-          id: _id,
-          ...rest,
-        });
-      });
-      return result;
-    } catch (err) {
-      throw new MongooseExceptions(err);
-    }
-  }
+      let index = 1;
 
-  async getCount() {
-    return this.model.countDocuments();
-  }
-
-  async delete(deleteDto: DeleteDocsDto) {
-    const { ids, all } = deleteDto;
-    try {
-      let toDeleteIds = [];
-
-      if (all) {
-        try {
-          const allDoc = await this.model.find({});
-          allDoc.forEach((item) => {
-            toDeleteIds.push(item._id);
-          });
-        } catch (err) {
-          throw new MongooseExceptions(err);
-        }
-      } else {
-        toDeleteIds = ids;
+      while (
+        (
+          await this.repository.findBy({
+            alias: (alias + '_' + index).toLowerCase(),
+          })
+        ).length !== 0
+      ) {
+        index++;
       }
-      const result = await this.model.deleteMany({ _id: { $in: toDeleteIds } });
-      return result.deletedCount;
+
+      alias = (index === 1 ? alias : alias + '_' + index).toLowerCase();
+
+      const category = new Category();
+      category.name = dto.name;
+      category.alias = alias;
+      Object.assign(category, dto);
+
+      return await this.repository.save(category);
     } catch (err) {
-      throw new MongooseExceptions(err);
+      throw new QueryFailedExceptions(err);
     }
+  }
+
+  async update(dto: CategoryUpdateDto) {
+    const { id, ...rest } = dto;
+    const tag = await this.findOneById(dto.id);
+    if (!tag) throw new NotFoundException('Tag not found');
+    Object.assign(tag, rest);
+    await this.repository.save(tag);
   }
 }

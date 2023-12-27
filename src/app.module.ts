@@ -37,7 +37,7 @@ import { User } from './modules/user/user.entity';
     // AdminMenuModule,
     UserModule,
     AuthModule,
-    // CategoryModule,
+    CategoryModule,
     FileModule,
     TagModule,
   ],
