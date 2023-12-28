@@ -5,8 +5,8 @@ import * as Joi from 'joi';
 export const adminMenuCreateJoi: JoiObject<AdminMenuCreateDto> = Joi.object({
   name: Joi.string().required(),
   path: Joi.string().required(),
-  iconclass: Joi.string().required(),
-  parent: Joi.string().allow(null, ''),
+  iconClass: Joi.string().required(),
+  parent: Joi.number().allow(null, ''),
   enable: Joi.boolean(),
   visible: Joi.boolean(),
 });

@@ -1,142 +1,118 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, QueryOptions } from 'mongoose';
-import { AdminMenu } from 'src/modules/admin-menu/admin-menu.schema';
-import ArrayUtils from '../../utils/array-utils';
-import MongooseExceptions from '../../common/exceptions/MongooseExceptions';
 import { AdminMenuCreateDto } from './dto/admin-menu.create.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AdminMenu } from './admin-menu.entity';
+import { IsNull, Not, Repository } from 'typeorm';
+import { GenericService } from '../../common/services/generic.service';
+import { QueryFailedExceptions } from '../../common/exceptions/query-failed-exceptions';
+import { AdminMenuUpdateTreeDto } from './dto/admin-menu.update-tree.dto';
 import { AdminMenuUpdateDto } from './dto/admin-menu.update.dto';
-import { DeleteDocsDto } from '../../common/dto/delete-docs.dto';
-import { AdminMenuUpdateIndexesDto } from './dto/admin-menu.update-indexes.dto';
+import { ListDto } from '../../common/dto/list.dto';
 
 @Injectable()
-export class AdminMenuService {
+export class AdminMenuService extends GenericService<AdminMenu> {
   constructor(
-    @InjectModel(AdminMenu.name) private menuModel: Model<AdminMenu>,
-  ) {}
+    @InjectRepository(AdminMenu) private repository: Repository<AdminMenu>,
+  ) {
+    super(repository);
+  }
 
-  async create(createDto: AdminMenuCreateDto) {
-    // 父菜单是否存在
-    if (createDto.parent) {
-      const parent = await this.menuModel.exists({ _id: createDto.parent });
-      if (!parent) throw new BadRequestException('添加失败,父菜单不存在');
-    }
+  async create(dto: AdminMenuCreateDto) {
+    const { parent, ...rest } = dto;
 
-    // 构造索引
-    const brothers = (await this.menuModel.find({
-      parent: createDto.parent,
-    })) as AdminMenu[];
-    const createMenu = new this.menuModel({
-      ...createDto,
-      index: brothers.length + 1,
+    // get parent
+    const parentMenu = await this.repository.findOne({
+      where: {
+        id: parent,
+      },
+      relations: {
+        children: true,
+      },
     });
 
-    try {
-      await createMenu.save();
-    } catch (err) {
-      throw new MongooseExceptions(err);
+    // generate index
+    let index = 1;
+    if (parentMenu) {
+      index = parentMenu.children.length + 1;
+    } else {
+      index =
+        (
+          await this.repository.find({
+            where: {
+              parent: IsNull(),
+            },
+          })
+        ).length + 1;
     }
+
+    // generate AdminMenu
+    const adminMenu = new AdminMenu();
+    adminMenu.index = index;
+    if (parentMenu) adminMenu.parent = parentMenu;
+    Object.assign(adminMenu, rest);
+
+    try {
+      return await this.repository.save(adminMenu);
+    } catch (err) {
+      throw new QueryFailedExceptions(err);
+    }
+  }
+
+  async updateTree(dto: AdminMenuUpdateTreeDto) {
+    for await (const item of dto.indexes) {
+      const menu = await this.repository.findOneBy({ id: item.id });
+      if (menu) menu.index = item.index;
+      menu.parent = await this.repository.findOneBy({ id: item.parent });
+      await this.repository.save(menu);
+    }
+    return;
   }
 
   async update(updateDto: AdminMenuUpdateDto) {
-    try {
-      const { id, ...params } = updateDto;
+    const { id, parent, ...rest } = updateDto;
 
-      return await this.menuModel.findByIdAndUpdate(updateDto.id, {
-        ...params,
-      });
-    } catch (err) {
-      throw new MongooseExceptions(err);
-    }
-  }
+    const menuItem = await this.repository.findOneBy({ id });
 
-  async list(query: QueryOptions) {
-    return this.menuModel.find({}, null, query);
-  }
+    if (!menuItem) throw new BadRequestException('待修改菜单不存在');
 
-  async count() {
-    return this.menuModel.countDocuments();
-  }
-
-  async getOneById(id: string) {
-    try {
-      const result = await this.menuModel.findById(id);
-      if (result) {
-        return {
-          id: result._id,
-          name: result.name,
-          iconclass: result.iconclass,
-          path: result.path,
-        };
-      } else {
-        return null;
-      }
-    } catch (err) {
-      throw new MongooseExceptions(err);
-    }
-  }
-
-  async delete(deleteDto: DeleteDocsDto) {
-    const { ids, all } = deleteDto;
-    try {
-      let toDeleteIds = [];
-      if (all) {
-        try {
-          const allDoc = await this.menuModel.find({});
-          allDoc.forEach((item) => {
-            toDeleteIds.push(item._id);
-          });
-        } catch (err) {
-          throw new MongooseExceptions(err);
-        }
-      } else {
-        toDeleteIds = ids;
-      }
-      const result = await this.menuModel.deleteMany({
-        _id: { $in: toDeleteIds },
-      });
-      return result.deletedCount;
-    } catch (err) {
-      throw new MongooseExceptions(err);
-    }
-  }
-
-  async getMenuTree() {
-    const menus = await this.list({});
-
-    let removeVMenus: AdminMenu[] = [];
-    // 剔除 __v 属性
-    menus.forEach((item) => {
-      const { __v, _id, ...menu } = item['_doc'];
-      menu.id = _id;
-      removeVMenus.push(menu);
+    // find to parent
+    const parentMenu = await this.repository.findOne({
+      where: { id: parent },
+      relations: {
+        children: true,
+      },
     });
+    menuItem.parent = parentMenu;
 
-    const groupedAndSortedMenus = ArrayUtils.groupAndSort(
-      removeVMenus,
-      'parent',
-      'index',
-    );
+    if (parentMenu) {
+      if (parentMenu.children.find((item) => item.id === menuItem.id)) {
+        menuItem.index = parentMenu.children.length;
+      } else {
+        menuItem.index = parentMenu.children.length + 1;
+      }
+    } else {
+      menuItem.index =
+        (
+          await this.repository.find({
+            where: {
+              parent: IsNull(),
+              id: Not(menuItem.id),
+            },
+          })
+        ).length + 1;
+    }
 
-    return ArrayUtils.generateTree(groupedAndSortedMenus, {
-      indexKey: 'parent',
-      rootVal: null,
-      parentBy: 'id',
-    });
+    Object.assign(menuItem, rest);
+
+    await this.repository.save(menuItem);
   }
 
-  async setMenuIndexes(body: AdminMenuUpdateIndexesDto) {
-    for (let i = 0; i < body.indexes.length; i++) {
-      let item = body.indexes[i];
-      try {
-        await this.menuModel.updateOne(
-          { _id: item.id },
-          {
-            index: item.index,
-            parent: item.parent,
-          },
-        );
-      } catch (err) {}
-    }
+  async tree() {
+    return await this.repository.find({
+      relations: {
+        children: true,
+      },
+      order: { index: 'ASC' },
+    });
   }
 }

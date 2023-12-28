@@ -1,8 +1,8 @@
 export interface AdminMenuCreateDto {
   name: string;
   path: string;
-  icon: string;
-  parent: string;
+  iconClass: string;
+  parent: number;
   enable: boolean;
   visible: boolean;
 }

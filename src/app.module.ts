@@ -34,7 +34,7 @@ import { User } from './modules/user/user.entity';
       synchronize: true,
       autoLoadEntities: true,
     }),
-    // AdminMenuModule,
+    AdminMenuModule,
     UserModule,
     AuthModule,
     CategoryModule,

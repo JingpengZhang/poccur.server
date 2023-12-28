@@ -1,21 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AdminMenuController } from './admin-menu.controller';
 import { AdminMenuService } from './admin-menu.service';
-import { MongooseModule } from '@nestjs/mongoose';
-import {
-  AdminMenu,
-  AdminMenuSchema,
-} from 'src/modules/admin-menu/admin-menu.schema';
+import { AdminMenu } from 'src/modules/admin-menu/admin-menu.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      {
-        name: AdminMenu.name,
-        schema: AdminMenuSchema,
-      },
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([AdminMenu])],
   controllers: [AdminMenuController],
   providers: [AdminMenuService],
 })
