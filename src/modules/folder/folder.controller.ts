@@ -54,8 +54,6 @@ export class FolderController {
   @Get('get_children')
   @UsePipes(new JoiValidationPipe(idJoi))
   async getChildren(@Query() query: EntityIdDto) {
-    return {
-      list: await this.service.getChildren(query),
-    };
+    return await this.service.getChildren(query);
   }
 }

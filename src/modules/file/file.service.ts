@@ -1,68 +1,104 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { MultipartFile } from '@fastify/multipart';
 import * as fs from 'fs';
-import FileUtils from '../../utils/file-utils';
 import * as dayjs from 'dayjs';
-import { customAlphabet } from 'nanoid';
 import * as util from 'util';
 import { pipeline } from 'stream';
-import { FileType } from '../../constants/file-type.enum';
 import { File, FileExtraProperty } from './file.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GenericService } from '../../common/services/generic.service';
 import { ListDto } from '../../common/dto/list.dto';
 import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
+import type { File as TFile } from 'formidable';
+import fileUtils from '../../common/utils/file-utils';
+import { customAlphabet } from 'nanoid';
+import { UserService } from '../user/user.service';
+import { FileType } from '../../constants/file-type.enum';
+import { CreateFileDto } from './dto/create-file.dto';
+import { FolderService } from '../folder/folder.service';
 
 const pump = util.promisify(pipeline);
 
 @Injectable()
 export class FileService extends GenericService<File> {
-  constructor(@InjectRepository(File) private repository: Repository<File>) {
+  constructor(
+    @InjectRepository(File)
+    private readonly repository: Repository<File>,
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
+    @Inject(forwardRef(() => FolderService))
+    private readonly folderService: FolderService,
+  ) {
     super(repository);
   }
 
-  async saveFile(file: MultipartFile, uploaderId: number) {
-    const { name, extension } = FileUtils.splitFileNameAndExtension(
-      file.filename,
+  async storageFile(file: TFile) {
+    const { name, extension } = fileUtils.getNameAndExtension(
+      file.originalFilename,
     );
-    const fileType = FileUtils.getFileTypeByExtension(extension);
+
+    const fileType = fileUtils.getFileTypeByExtension(extension);
 
     const now = dayjs();
 
-    const fileLocation =
-      FileUtils.getFileStorageLocationByType(fileType) +
+    const storageLocation =
+      fileUtils.getFileStorageLocationByType(fileType) +
       '/' +
       now.format('YYYYMMDD');
 
-    if (!fs.existsSync(fileLocation)) await fs.mkdirSync(fileLocation);
+    if (!fs.existsSync(storageLocation)) fs.mkdirSync(storageLocation);
 
     const nanoid = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 10);
 
     const fileName = name + '_' + nanoid() + '.' + extension;
 
-    const filePath = fileLocation + '/' + fileName;
+    const filePath = storageLocation + '/' + fileName;
 
-    await pump(file.file, fs.createWriteStream(filePath));
+    fs.renameSync(file.filepath, filePath);
 
-    const fileStat = fs.statSync(filePath);
-
-    // 存储文件信息到数据库
     const publicPath = filePath.replace('./storage', '/public');
 
-    const fileEntity = new File();
-    fileEntity.path = publicPath;
-    fileEntity.filename = fileName;
-    fileEntity.type = fileType;
-    fileEntity.filesize = fileStat.size;
-    fileEntity.extension = extension;
-    // @ts-ignore
-    fileEntity.uploader = uploaderId;
-    fileEntity.storagePath = filePath;
-    fileEntity.extra = {};
+    return {
+      publicPath,
+      storagePath: filePath,
+      fileName,
+      fileType,
+      fileExtension: extension,
+    };
+  }
 
-    if (fileType === FileType.Image) {
-      const dimensions = FileUtils.getImageDimensions(filePath);
+  async upload(dto: CreateFileDto) {
+    const { file, uploaderId, filename, folderId, ...rest } = dto;
+
+    const uploader = await this.userService.findOneById(uploaderId);
+    if (!uploader) throw new BadRequestException('非法上传');
+
+    const folder = folderId
+      ? await this.folderService.findOneById(folderId)
+      : null;
+    // 存储到磁盘
+    const fileInfo = await this.storageFile(file);
+
+    const fileEntity = new File();
+    fileEntity.path = fileInfo.publicPath;
+    fileEntity.filename = fileInfo.fileName;
+    fileEntity.type = fileInfo.fileType;
+    fileEntity.filesize = file.size;
+    fileEntity.extension = fileInfo.fileExtension;
+    fileEntity.uploader = uploader;
+    fileEntity.storagePath = fileInfo.storagePath;
+    fileEntity.extra = {};
+    fileEntity.folder = folder;
+    Object.assign(fileEntity, rest);
+
+    if (fileInfo.fileType === FileType.Image) {
+      const dimensions = fileUtils.getImageDimensions(fileInfo.storagePath);
       (fileEntity.extra as FileExtraProperty).width = dimensions.width;
       (fileEntity.extra as FileExtraProperty).height = dimensions.height;
     }
@@ -76,8 +112,8 @@ export class FileService extends GenericService<File> {
   ) {
     const data = [];
     for await (const file of files) {
-      const info = await this.saveFile(file, uploaderId);
-      data.push(info);
+      // const info = await this.saveFile(file, uploaderId);
+      // data.push(info);
     }
     return data;
   }

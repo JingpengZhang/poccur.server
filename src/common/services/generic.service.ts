@@ -2,10 +2,6 @@ import { FindManyOptions, Repository } from 'typeorm';
 import { ListDto } from '../dto/list.dto';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { DeleteDto } from '../dto/delete.dto';
-import {
-  FindOptionsRelationByString,
-  FindOptionsRelations,
-} from 'typeorm/find-options/FindOptionsRelations';
 
 export class GenericService<T> {
   constructor(private readonly _repository: Repository<T>) {}
@@ -15,8 +11,8 @@ export class GenericService<T> {
     return await this._repository.findOneBy({ id });
   }
 
-  async find() {
-    return await this._repository.find();
+  async find(options?: FindManyOptions<T>): Promise<T[]> {
+    return await this._repository.find(options);
   }
 
   async count() {

@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -23,6 +25,7 @@ export class UserService extends GenericService<User> {
     @InjectRepository(User)
     private repository: Repository<User>,
     private bcryptService: BcryptService,
+    @Inject(forwardRef(() => FileService))
     private fileService: FileService,
   ) {
     super(repository);
@@ -131,7 +134,10 @@ export class UserService extends GenericService<User> {
   }
 
   async updateAvatar(dto: UserUpdateAvatarDto) {
-    const file = await this.fileService.saveFile(dto.file, dto.uploaderId);
+    const file = await this.fileService.upload({
+      file: dto.file,
+      uploaderId: dto.uploaderId,
+    });
 
     const user = await this.repository.findOne({
       where: {

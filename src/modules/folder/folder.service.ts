@@ -1,19 +1,28 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { GenericService } from '../../common/services/generic.service';
 import { Folder } from './folder.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Equal, IsNull, Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { UserService } from '../user/user.service';
 import { FolderCreateDto } from './dto/folder.create.dto';
 import { FolderUpdateDto } from './dto/folder.update.dto';
-import { when } from 'joi';
 import { EntityIdDto } from '../../common/dto/entity-id.dto';
+import { FileService } from '../file/file.service';
+import { File } from '../file/file.entity';
 
 @Injectable()
 export class FolderService extends GenericService<Folder> {
   constructor(
     @InjectRepository(Folder) private repository: Repository<Folder>,
+    @Inject(forwardRef(() => UserService))
     private userService: UserService,
+    @Inject(forwardRef(() => FileService))
+    private readonly fileService: FileService,
   ) {
     super(repository);
   }
@@ -70,15 +79,38 @@ export class FolderService extends GenericService<Folder> {
   }
 
   async getChildren(dto: EntityIdDto) {
+    let files: File[] = [];
+    let folders: Folder[] = [];
+
     const folder = await this.repository.findOne({
       where: {
         id: dto.id,
       },
       relations: {
         children: true,
+        files: true,
       },
     });
 
-    return folder.children;
+    if (folder) {
+      files = folder.files;
+      folders = folder.children;
+    } else {
+      folders = await this.repository.find({
+        where: {
+          parent: IsNull(),
+        },
+      });
+      files = await this.fileService.find({
+        where: {
+          folder: IsNull(),
+        },
+      });
+    }
+
+    return {
+      files,
+      folders,
+    };
   }
 }

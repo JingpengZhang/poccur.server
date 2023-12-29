@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity';
 import { User } from '../user/user.entity';
+import { File } from '../file/file.entity';
 
 @Entity()
 export class Folder extends BaseEntity {
@@ -21,4 +22,7 @@ export class Folder extends BaseEntity {
 
   @OneToMany(() => Folder, (folder) => folder.parent)
   children: Folder[];
+
+  @OneToMany(() => File, (file) => file.folder)
+  files: File[];
 }

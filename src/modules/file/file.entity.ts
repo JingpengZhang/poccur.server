@@ -1,9 +1,8 @@
-import { Column, Entity, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { FileType } from '../../constants/file-type.enum';
 import { User } from '../user/user.entity';
-import { JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity';
-import { Exclude } from 'class-transformer';
+import { Folder } from '../folder/folder.entity';
 
 export interface FileExtraProperty {
   thumb?: string; // id
@@ -40,4 +39,11 @@ export class File extends BaseEntity {
   @ManyToOne(() => User, (user) => user.files, { onDelete: 'CASCADE' })
   @JoinColumn()
   uploader: User;
+
+  @ManyToOne(() => Folder, (folder) => folder.files, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn()
+  folder: Folder;
 }

@@ -15,6 +15,7 @@ import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
 import { deleteQueryJoi } from '../../common/joi/delete-query.joi';
 import { DevOnlyPipe } from '../../common/pipes/dev-only.pipe';
 import { Public } from '../../common/decorators/public.decorator';
+import formidable from 'formidable';
 
 @Controller('file')
 export class FileController {
@@ -22,9 +23,14 @@ export class FileController {
 
   @Post('upload')
   async upload(@Req() request: FastifyRequest) {
-    const data = await request.file();
+    const form = formidable();
+    const [fields, files] = await form.parse(request.raw);
     return {
-      info: await this.service.saveFile(data, request['user'].id),
+      info: await this.service.upload({
+        file: Object.values(files)[0][0],
+        uploaderId: request['user'].id,
+        ...fields,
+      }),
     };
   }
 
@@ -44,7 +50,6 @@ export class FileController {
   }
 
   @Post('delete_all')
-  @Public()
   @UsePipes(new DevOnlyPipe())
   async deleteAll() {
     return await this.service.deleteAllFiles();

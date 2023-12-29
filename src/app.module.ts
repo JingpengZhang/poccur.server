@@ -19,12 +19,6 @@ import { FolderModule } from './modules/folder/folder.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    MongooseModule.forRoot('mongodb://127.0.0.1:27017/poccur', {
-      connectionFactory: (connection) => {
-        connection.plugin(MongooseTransformPlugin);
-        return connection;
-      },
-    }),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',
