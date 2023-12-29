@@ -13,6 +13,7 @@ import { Role } from '../../constants/role.enum';
 import { File } from '../file/file.entity';
 import { Tag } from '../tag/tag.entity';
 import { Category } from '../category/category.entity';
+import { Folder } from '../folder/folder.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -65,4 +66,7 @@ export class User extends BaseEntity {
   @ManyToOne(() => File, { onDelete: 'SET NULL' })
   @JoinColumn()
   avatar: File;
+
+  @ManyToOne(() => Folder, (folder) => folder.creator)
+  folders: Folder[];
 }

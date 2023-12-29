@@ -12,6 +12,7 @@ import { CategoryModule } from './modules/category/category.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './modules/user/user.entity';
+import { FolderModule } from './modules/folder/folder.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { User } from './modules/user/user.entity';
     CategoryModule,
     FileModule,
     TagModule,
+    FolderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
