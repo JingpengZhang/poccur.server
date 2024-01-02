@@ -1,19 +1,10 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  ObjectIdColumn,
-  OneToMany,
-  PrimaryColumn,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity';
-import { Role } from '../../constants/role.enum';
 import { File } from '../file/file.entity';
 import { Tag } from '../tag/tag.entity';
 import { Category } from '../category/category.entity';
 import { Folder } from '../folder/folder.entity';
+import { Article } from '../article/article.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -69,4 +60,7 @@ export class User extends BaseEntity {
 
   @ManyToOne(() => Folder, (folder) => folder.creator)
   folders: Folder[];
+
+  @ManyToOne(() => Article, (article) => article.poster)
+  articles: Article[];
 }

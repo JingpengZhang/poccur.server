@@ -31,8 +31,6 @@ export class AuthService {
     };
   }
 
-  '';
-
   async signUp(signUpDto: AuthSignUpDto) {
     const { autoSignIn, ...rest } = signUpDto;
 
