@@ -1,17 +1,7 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  Req,
-  UsePipes,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common';
 import { TagService } from './tag.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { JoiValidationPipe } from '../../common/pipes/joi-validation.pipe';
-import { FastifyRequest } from 'fastify';
-import { tagCreateJoi } from './joi/tag.create.joi';
 import { TagCreateDto } from './dto/tag.create.dto';
 import { tagUpdateJoi } from './joi/tag.update.joi';
 import { TagUpdateDto } from './dto/tag.update.dto';
@@ -20,6 +10,8 @@ import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
 import { ListDto } from '../../common/dto/list.dto';
 import { DevOnlyPipe } from '../../common/pipes/dev-only.pipe';
 import { listJoi } from '../../common/joi/list.joi';
+import { tagCreateJoi } from './joi/tag.create.joi';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('/tag')
 export class TagController {
@@ -28,14 +20,8 @@ export class TagController {
   @Post('create')
   // @Roles(Role.Super, Role.Admin)
   @UsePipes(new JoiValidationPipe(tagCreateJoi))
-  async create(
-    @Req() request: FastifyRequest,
-    @Body() body: Omit<TagCreateDto, 'creator'>,
-  ) {
-    const tag = await this.service.create({
-      creator: request['user'].id,
-      ...body,
-    });
+  async create(@CurrentUser() userId: number, @Body() body: TagCreateDto) {
+    const tag = await this.service.create(body);
     return {
       id: tag.id,
     };

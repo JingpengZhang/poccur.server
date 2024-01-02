@@ -1,18 +1,7 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  Req,
-  UsePipes,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { JoiValidationPipe } from '../../common/pipes/joi-validation.pipe';
-import { FastifyRequest } from 'fastify';
 import { Public } from '../../common/decorators/public.decorator';
-import { Roles } from '../../common/decorators/role.decorator';
-import { Role } from '../../constants/role.enum';
 import { categoryCreateJoi } from './joi/category.create.joi';
 import { CategoryCreateDto } from './dto/category.create.dto';
 import { categoryUpdateJoi } from './joi/category.update.joi';
@@ -22,6 +11,7 @@ import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
 import { DevOnlyPipe } from '../../common/pipes/dev-only.pipe';
 import { ListDto } from '../../common/dto/list.dto';
 import { listJoi } from '../../common/joi/list.joi';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('category')
 export class CategoryController {
@@ -30,12 +20,9 @@ export class CategoryController {
   @Post('create')
   // @Roles(Role.Super, Role.Admin)
   @UsePipes(new JoiValidationPipe(categoryCreateJoi))
-  async create(
-    @Req() request: FastifyRequest,
-    @Body() body: CategoryCreateDto,
-  ) {
+  async create(@CurrentUser() userId: number, @Body() body: CategoryCreateDto) {
     const category = await this.service.create({
-      creator: request['user'].id,
+      creator: userId,
       ...body,
     });
     return {

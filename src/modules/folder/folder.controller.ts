@@ -1,15 +1,6 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  Req,
-  UsePipes,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common';
 import { FolderService } from './folder.service';
 import { FolderCreateDto } from './dto/folder.create.dto';
-import { FastifyRequest } from 'fastify';
 import { JoiValidationPipe } from '../../common/pipes/joi-validation.pipe';
 import { folderCreateJoi } from './joi/folder.create.joi';
 import { deleteQueryJoi } from '../../common/joi/delete-query.joi';
@@ -19,6 +10,7 @@ import { folderUpdateJoi } from './joi/folder.update.joi';
 import { FolderUpdateDto } from './dto/folder.update.dto';
 import { idJoi } from '../../common/joi/id.joi';
 import { EntityIdDto } from '../../common/dto/entity-id.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('folder')
 export class FolderController {
@@ -26,9 +18,9 @@ export class FolderController {
 
   @Post('create')
   @UsePipes(new JoiValidationPipe(folderCreateJoi))
-  async create(@Req() request: FastifyRequest, @Body() body: FolderCreateDto) {
+  async create(@CurrentUser() userId: number, @Body() body: FolderCreateDto) {
     return {
-      id: (await this.service.create(request['user'].id, body)).id,
+      id: (await this.service.create(userId, body)).id,
     };
   }
 

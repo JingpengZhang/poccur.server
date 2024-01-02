@@ -21,6 +21,7 @@ import { listJoi } from '../../common/joi/list.joi';
 import { DevOnlyPipe } from '../../common/pipes/dev-only.pipe';
 import { idJoi } from '../../common/joi/id.joi';
 import formidable from 'formidable';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('user')
 export class UserController {
@@ -80,9 +81,9 @@ export class UserController {
   }
 
   @Get('current_user_profile')
-  async getCurrentUserProfile(@Req() request: FastifyRequest) {
+  async getCurrentUserProfile(@CurrentUser() userId: number) {
     return {
-      profile: await this.service.getUserProfile(request['user'].id),
+      profile: await this.service.getUserProfile(userId),
     };
   }
 
