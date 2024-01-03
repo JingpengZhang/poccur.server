@@ -23,7 +23,7 @@ export class ArticleService extends GenericService<Article> {
   }
 
   async create(posterId: number, dto: CreateArticleDto) {
-    const { title, tags, categories, cover, ...rest } = dto;
+    const { title, tags, categories, cover, description, ...rest } = dto;
 
     const posterEntity = await this.articleManagerService.getUserById(posterId);
 
@@ -33,8 +33,6 @@ export class ArticleService extends GenericService<Article> {
       await this.articleManagerService.getCategoriesByIdArray(categories);
 
     const coverFileEntity = await this.articleManagerService.getFileById(cover);
-
-    console.log(tagEntities, categoryEntities, coverFileEntity, posterEntity);
 
     // generate path
     const nanoid = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 4);
@@ -58,13 +56,24 @@ export class ArticleService extends GenericService<Article> {
     article.categories = categoryEntities;
     article.cover = coverFileEntity;
     article.poster = posterEntity;
+
+    // if no description, generate description
+    let _description = description;
+    if (!description) {
+      _description = this.articleManagerService.getPureText(dto.content);
+    }
+    article.description = _description;
+
+    // combine other fields
     Object.assign(article, rest);
 
+    // generate md file
     await this.markdownService.create(
       dto.content,
       ArticleService.articleStoragePathPrefix + path,
     );
 
+    // save repository
     await this.repository.save(article);
   }
 }
