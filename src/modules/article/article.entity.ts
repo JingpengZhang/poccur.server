@@ -27,14 +27,15 @@ export class Article extends BaseEntity {
 
   @ManyToOne(() => User, (user) => user.articles, { onDelete: 'SET NULL' })
   poster: User;
+
+  @ManyToMany(() => Tag, (tag) => tag.articles)
   @JoinTable()
-  @ManyToMany(() => Tag, (tag) => tag.articles, { nullable: true })
   tags: Tag[];
 
   @ManyToMany(() => Category, (category) => category.articles)
   @JoinTable()
   categories: Category[];
 
-  @ManyToOne(() => File, { onDelete: 'SET NULL' })
+  @ManyToOne(() => File, { onDelete: 'SET NULL', nullable: true })
   cover: File;
 }

@@ -5,6 +5,7 @@ import { CategoryService } from '../../modules/category/category.service';
 import { FileService } from '../../modules/file/file.service';
 import { UserService } from '../../modules/user/user.service';
 import { Converter } from 'showdown';
+import { MarkdownService } from '../../common/services/markdown.service';
 
 @Injectable()
 export class ArticleManagerService {
@@ -13,7 +14,16 @@ export class ArticleManagerService {
     private readonly categoryService: CategoryService,
     private readonly fileService: FileService,
     private readonly userService: UserService,
+    private readonly markdownService: MarkdownService,
   ) {}
+
+  storageArticleFile(content: string, filePath: string) {
+    this.markdownService.create(content, filePath);
+  }
+
+  replaceArticleFileContent(content: string, filePath: string) {
+    this.markdownService.write(content, filePath);
+  }
 
   async getUserById(userId: number) {
     return await this.userService.findOneById(userId);
@@ -63,5 +73,17 @@ export class ArticleManagerService {
     result = result.replace(/[\r\n]/g, '');
 
     return result;
+  }
+
+  async deleteCover(id: number) {
+    await this.fileService.delete(id);
+  }
+
+  readArticleContent(storagePath: string) {
+    return this.markdownService.read(storagePath);
+  }
+
+  deleteArticleFile(path: string) {
+    return this.markdownService.deleteMarkdown(path);
   }
 }
