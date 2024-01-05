@@ -1,7 +1,14 @@
-import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
+import {
+  FindManyOptions,
+  FindOneOptions,
+  IsNull,
+  Not,
+  Repository,
+} from 'typeorm';
 import { ListDto } from '../dto/list.dto';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { DeleteDto } from '../dto/delete.dto';
+import { ListResult } from '../types/list-result';
 
 export class GenericService<T> {
   constructor(private readonly _repository: Repository<T>) {}
@@ -28,7 +35,10 @@ export class GenericService<T> {
    * @param dto
    * @param options
    */
-  async list(dto: ListDto, options?: FindManyOptions<T>) {
+  async list(
+    dto: ListDto,
+    options?: FindManyOptions<T>,
+  ): Promise<ListResult<T>> {
     const page = dto.page | 1;
     const pageSize = dto.pageSize | 10;
 
@@ -60,6 +70,26 @@ export class GenericService<T> {
   async softDelete(criteria: DeleteDto | FindOptionsWhere<T>) {
     return {
       count: (await this._repository.softDelete(criteria)).affected,
+    };
+  }
+
+  async deletedList(dto: ListDto, options?: FindManyOptions<T>) {
+    const result = await this.list(dto, {
+      withDeleted: true,
+      where: {
+        // @ts-ignore
+        deletedAt: Not(IsNull()),
+      },
+    });
+    return {
+      ...result,
+      total: await this._repository.count({
+        withDeleted: true,
+        where: {
+          // @ts-ignore
+          deletedAt: Not(IsNull()),
+        },
+      }),
     };
   }
 }

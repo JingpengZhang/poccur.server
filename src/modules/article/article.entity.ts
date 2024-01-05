@@ -33,7 +33,7 @@ export class Article extends BaseEntity {
   storagePath: string;
 
   @DeleteDateColumn()
-  deleteAt: Date;
+  deletedAt: Date;
 
   @ManyToOne(() => User, (user) => user.articles, { onDelete: 'SET NULL' })
   poster: User;

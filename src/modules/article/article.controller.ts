@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UsePipes } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -8,6 +8,8 @@ import { updateArticleJoi } from './joi/update-article.joi';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { deleteQueryJoi } from '../../common/joi/delete-query.joi';
 import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
+import { listJoi } from '../../common/joi/list.joi';
+import { ListDto } from '../../common/dto/list.dto';
 
 @Controller('article')
 export class ArticleController {
@@ -35,5 +37,17 @@ export class ArticleController {
   @UsePipes(new JoiValidationPipe(updateArticleJoi))
   async update(@Body() body: UpdateArticleDto) {
     await this.service.update(body);
+  }
+
+  @Get('list')
+  @UsePipes(new JoiValidationPipe(listJoi))
+  async list(@Query() query: ListDto) {
+    return await this.service.list(query);
+  }
+
+  @Get('deleted_list')
+  @UsePipes(new JoiValidationPipe(listJoi))
+  async deletedList(@Query() query: ListDto) {
+    return await this.service.deletedList(query);
   }
 }
