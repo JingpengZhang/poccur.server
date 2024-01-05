@@ -5,4 +5,5 @@ export enum FileType {
   Audio,
   ZIP,
   DOCUMENT,
+  Article,
 }

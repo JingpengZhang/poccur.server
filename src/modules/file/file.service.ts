@@ -17,11 +17,11 @@ import { ListDto } from '../../common/dto/list.dto';
 import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
 import type { File as TFile } from 'formidable';
 import fileUtils from '../../common/utils/file-utils';
-import { customAlphabet } from 'nanoid';
 import { UserService } from '../user/user.service';
 import { FileType } from '../../constants/file-type.enum';
 import { CreateFileDto } from './dto/create-file.dto';
 import { FolderService } from '../folder/folder.service';
+import { StorageService } from '../../common/services/storage.service';
 
 const pump = util.promisify(pipeline);
 
@@ -34,11 +34,12 @@ export class FileService extends GenericService<File> {
     private readonly userService: UserService,
     @Inject(forwardRef(() => FolderService))
     private readonly folderService: FolderService,
+    private readonly storageService: StorageService,
   ) {
     super(repository);
   }
 
-  async storageFile(file: TFile) {
+  async storageFile(userId: number, file: TFile) {
     const { name, extension } = fileUtils.getNameAndExtension(
       file.originalFilename,
     );
@@ -47,26 +48,22 @@ export class FileService extends GenericService<File> {
 
     const now = dayjs();
 
-    const storageLocation =
-      fileUtils.getFileStorageLocationByType(fileType) +
-      '/' +
-      now.format('YYYYMMDD');
+    let storagePath = this.storageService.getUserStoragePath(
+      userId,
+      fileType,
+      true,
+    );
 
-    if (!fs.existsSync(storageLocation)) fs.mkdirSync(storageLocation);
+    const fileName =
+      name + '_' + this.storageService.getRandomString() + '.' + extension;
 
-    const nanoid = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 10);
+    storagePath += '/' + fileName;
 
-    const fileName = name + '_' + nanoid() + '.' + extension;
-
-    const filePath = storageLocation + '/' + fileName;
-
-    fs.renameSync(file.filepath, filePath);
-
-    const publicPath = filePath.replace('./storage', '/public');
+    fs.renameSync(file.filepath, storagePath);
 
     return {
-      publicPath,
-      storagePath: filePath,
+      publicPath: this.storageService.transferToPublicPath(storagePath),
+      storagePath,
       fileName,
       fileType,
       fileExtension: extension,
@@ -83,7 +80,7 @@ export class FileService extends GenericService<File> {
       ? await this.folderService.findOneById(folderId)
       : null;
     // 存储到磁盘
-    const fileInfo = await this.storageFile(file);
+    const fileInfo = await this.storageFile(uploaderId, file);
 
     const fileEntity = new File();
     fileEntity.path = fileInfo.publicPath;

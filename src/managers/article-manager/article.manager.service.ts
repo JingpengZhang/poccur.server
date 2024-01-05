@@ -6,10 +6,12 @@ import { FileService } from '../../modules/file/file.service';
 import { UserService } from '../../modules/user/user.service';
 import { Converter } from 'showdown';
 import { MarkdownService } from '../../common/services/markdown.service';
+import { StorageService } from '../../common/services/storage.service';
 
 @Injectable()
 export class ArticleManagerService {
   constructor(
+    private readonly storageService: StorageService,
     private readonly tagService: TagService,
     private readonly categoryService: CategoryService,
     private readonly fileService: FileService,

@@ -4,12 +4,12 @@ import { Article } from './article.entity';
 import { Repository } from 'typeorm';
 import { ArticleManagerService } from '../../managers/article-manager/article.manager.service';
 import { GenericService } from '../../common/services/generic.service';
-import * as dayjs from 'dayjs';
-import { customAlphabet } from 'nanoid';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { Tag } from '../tag/tag.entity';
 import { Category } from '../category/category.entity';
+import { StorageService } from '../../common/services/storage.service';
+import { FileType } from '../../constants/file-type.enum';
 
 @Injectable()
 export class ArticleService extends GenericService<Article> {
@@ -19,6 +19,7 @@ export class ArticleService extends GenericService<Article> {
   constructor(
     @InjectRepository(Article) private readonly repository: Repository<Article>,
     private readonly articleManagerService: ArticleManagerService,
+    private readonly storageService: StorageService,
   ) {
     super(repository);
   }
@@ -36,23 +37,29 @@ export class ArticleService extends GenericService<Article> {
     const coverFileEntity = await this.articleManagerService.getFileById(cover);
 
     // generate path
-    const nanoid = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 4);
-    const day = dayjs();
-    const path =
-      '/' +
-      day.format('YYYYMMDD') +
-      '/' +
+    const fileName =
       title +
       '_' +
       posterId +
       '_' +
-      nanoid() +
+      this.storageService.getRandomString() +
       '.md';
+
+    let storagePath = this.storageService.getUserStoragePath(
+      posterId,
+      FileType.Article,
+      true,
+    );
+
+    storagePath += '/' + fileName;
+
+    // generate md file
+    this.articleManagerService.storageArticleFile(dto.content, storagePath);
 
     const article = new Article();
     article.title = dto.title;
-    article.path = ArticleService.articlePublicPathPrefix + path;
-    article.storagePath = ArticleService.articleStoragePathPrefix + path;
+    article.path = this.storageService.transferToPublicPath(storagePath);
+    article.storagePath = storagePath;
     article.tags = tagEntities;
     article.categories = categoryEntities;
     article.cover = coverFileEntity;
@@ -67,12 +74,6 @@ export class ArticleService extends GenericService<Article> {
 
     // combine other fields
     Object.assign(article, rest);
-
-    // generate md file
-    this.articleManagerService.storageArticleFile(
-      dto.content,
-      ArticleService.articleStoragePathPrefix + path,
-    );
 
     // save repository
     await this.repository.save(article);

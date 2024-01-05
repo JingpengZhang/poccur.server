@@ -5,8 +5,6 @@ export class MarkdownService {
   constructor() {}
 
   create(content: string, filePath: string) {
-    const dirPath = filePath.substring(0, filePath.lastIndexOf('/'));
-    if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath);
     fs.writeFileSync(filePath, content, 'utf8');
   }
 
