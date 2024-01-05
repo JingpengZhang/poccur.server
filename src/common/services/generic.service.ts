@@ -56,4 +56,10 @@ export class GenericService<T> {
   async deleteAll() {
     return await this.delete({});
   }
+
+  async softDelete(criteria: DeleteDto | FindOptionsWhere<T>) {
+    return {
+      count: (await this._repository.softDelete(criteria)).affected,
+    };
+  }
 }

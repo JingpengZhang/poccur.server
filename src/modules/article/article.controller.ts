@@ -6,6 +6,8 @@ import { JoiValidationPipe } from '../../common/pipes/joi-validation.pipe';
 import { createArticleJoi } from './joi/create-article.joi';
 import { updateArticleJoi } from './joi/update-article.joi';
 import { UpdateArticleDto } from './dto/update-article.dto';
+import { deleteQueryJoi } from '../../common/joi/delete-query.joi';
+import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
 
 @Controller('article')
 export class ArticleController {
@@ -15,6 +17,18 @@ export class ArticleController {
   @UsePipes(new JoiValidationPipe(createArticleJoi))
   async create(@CurrentUser() userId: number, @Body() body: CreateArticleDto) {
     await this.service.create(userId, body);
+  }
+
+  @Post('delete')
+  @UsePipes(new JoiValidationPipe(deleteQueryJoi))
+  async delete(@Body() body: DeleteQueryDto) {
+    return await this.service.delete(body.data);
+  }
+
+  @Post('soft_delete')
+  @UsePipes(new JoiValidationPipe(deleteQueryJoi))
+  async softDelete(@Body() body: DeleteQueryDto) {
+    return await this.service.softDelete(body.data);
   }
 
   @Post('update')

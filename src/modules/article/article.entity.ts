@@ -1,4 +1,11 @@
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
+import {
+  Column,
+  DeleteDateColumn,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+} from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity';
 import { User } from '../user/user.entity';
 import { Category } from '../category/category.entity';
@@ -24,6 +31,9 @@ export class Article extends BaseEntity {
 
   @Column()
   storagePath: string;
+
+  @DeleteDateColumn()
+  deleteAt: Date;
 
   @ManyToOne(() => User, (user) => user.articles, { onDelete: 'SET NULL' })
   poster: User;

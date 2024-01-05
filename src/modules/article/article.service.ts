@@ -10,6 +10,8 @@ import { Tag } from '../tag/tag.entity';
 import { Category } from '../category/category.entity';
 import { StorageService } from '../../common/services/storage.service';
 import { FileType } from '../../constants/file-type.enum';
+import { DeleteDto } from '../../common/dto/delete.dto';
+import { number } from 'joi';
 
 @Injectable()
 export class ArticleService extends GenericService<Article> {
@@ -155,5 +157,22 @@ export class ArticleService extends GenericService<Article> {
     await this.repository.save(article);
 
     return;
+  }
+
+  async delete(criteria: DeleteDto) {
+    let ids = criteria instanceof Array ? criteria : [criteria];
+
+    // delete file
+    for await (const id of ids) {
+      if (typeof id === 'number') {
+        const article = await this.findOneById(id);
+
+        if (!article) throw new BadRequestException('文章不存在');
+
+        this.articleManagerService.deleteArticleFile(article.storagePath);
+      }
+    }
+
+    return super.delete(criteria);
   }
 }
