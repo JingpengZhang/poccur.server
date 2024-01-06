@@ -45,7 +45,7 @@ export class StorageService {
   }
 
   transferToPublicPath(storagePath: string) {
-    return storagePath.replace(this.baseURL, this.publicBaseURL);
+    return storagePath.replace(this.baseURL, this.publicBaseURL).substring(1);
   }
 
   getRandomString(size: number = 4) {
