@@ -10,6 +10,8 @@ import { deleteQueryJoi } from '../../common/joi/delete-query.joi';
 import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
 import { listJoi } from '../../common/joi/list.joi';
 import { ListDto } from '../../common/dto/list.dto';
+import { idJoi } from '../../common/joi/id.joi';
+import { EntityIdDto } from '../../common/dto/entity-id.dto';
 
 @Controller('article')
 export class ArticleController {
@@ -49,5 +51,11 @@ export class ArticleController {
   @UsePipes(new JoiValidationPipe(listJoi))
   async deletedList(@Query() query: ListDto) {
     return await this.service.deletedList(query);
+  }
+
+  @Get('detail')
+  @UsePipes(new JoiValidationPipe(idJoi))
+  async detail(@Query() query: EntityIdDto) {
+    return await this.service.detail(query);
   }
 }

@@ -12,6 +12,7 @@ import { StorageService } from '../../common/services/storage.service';
 import { FileType } from '../../constants/file-type.enum';
 import { DeleteDto } from '../../common/dto/delete.dto';
 import { number } from 'joi';
+import { EntityIdDto } from '../../common/dto/entity-id.dto';
 
 @Injectable()
 export class ArticleService extends GenericService<Article> {
@@ -174,5 +175,40 @@ export class ArticleService extends GenericService<Article> {
     }
 
     return super.delete(criteria);
+  }
+
+  async detail(dto: EntityIdDto) {
+    const { id } = dto;
+    const article = await this.repository.findOne({
+      where: {
+        id,
+      },
+      relations: {
+        tags: true,
+        cover: true,
+        categories: true,
+      },
+      select: {
+        tags: {
+          id: true,
+          name: true,
+        },
+        categories: {
+          id: true,
+          name: true,
+        },
+        cover: {
+          path: true,
+        },
+      },
+    });
+
+    if (!article) throw new BadRequestException('文章不存在');
+
+    delete article.password;
+    delete article.storagePath;
+
+    // get content
+    return article;
   }
 }
