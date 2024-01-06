@@ -1,3 +1,5 @@
+import { EntityId } from '../types/entity-id';
+
 export interface EntityIdDto {
-  id: number;
+  id: EntityId;
 }

@@ -12,6 +12,8 @@ import { listJoi } from '../../common/joi/list.joi';
 import { ListDto } from '../../common/dto/list.dto';
 import { idJoi } from '../../common/joi/id.joi';
 import { EntityIdDto } from '../../common/dto/entity-id.dto';
+import { getListByTagJoi } from './joi/get-list-by-tag.joi';
+import { GetListByTagDto } from './dto/get-list-by-tag.dto';
 
 @Controller('article')
 export class ArticleController {
@@ -57,5 +59,11 @@ export class ArticleController {
   @UsePipes(new JoiValidationPipe(idJoi))
   async detail(@Query() query: EntityIdDto) {
     return await this.service.detail(query);
+  }
+
+  @Get('get_list_by_tag')
+  @UsePipes(new JoiValidationPipe(getListByTagJoi))
+  async getListByTag(@Query() query: GetListByTagDto) {
+    return await this.service.getListByTag(query);
   }
 }

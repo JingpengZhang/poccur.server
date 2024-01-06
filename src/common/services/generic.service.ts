@@ -26,8 +26,8 @@ export class GenericService<T> {
     return await this._repository.findOne(options);
   }
 
-  async count() {
-    return await this._repository.count();
+  async count(options?: FindManyOptions<T>) {
+    return await this._repository.count(options);
   }
 
   /**
@@ -53,7 +53,7 @@ export class GenericService<T> {
       }),
       currentPage: page,
       pageSize: pageSize,
-      total: await this.count(),
+      total: await this.count(options),
     };
   }
 

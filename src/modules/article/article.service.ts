@@ -15,6 +15,7 @@ import { EntityIdDto } from '../../common/dto/entity-id.dto';
 import { BcryptService } from '../../common/services/bcrypt.service';
 import { ListResult } from '../../common/types/list-result';
 import { ListDto } from '../../common/dto/list.dto';
+import { GetListByTagDto } from './dto/get-list-by-tag.dto';
 
 @Injectable()
 export class ArticleService extends GenericService<Article> {
@@ -264,6 +265,17 @@ export class ArticleService extends GenericService<Article> {
         updatedAt: true,
         path: true,
         password: true,
+      },
+    });
+  }
+
+  async getListByTag(dto: GetListByTagDto) {
+    const { tagId, ...rest } = dto;
+    return await this.list(rest, {
+      where: {
+        tags: {
+          id: tagId,
+        },
       },
     });
   }
