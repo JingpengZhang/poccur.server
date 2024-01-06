@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Article } from './article.entity';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import { ArticleManagerService } from '../../managers/article-manager/article.manager.service';
 import { GenericService } from '../../common/services/generic.service';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -11,15 +11,13 @@ import { Category } from '../category/category.entity';
 import { StorageService } from '../../common/services/storage.service';
 import { FileType } from '../../constants/file-type.enum';
 import { DeleteDto } from '../../common/dto/delete.dto';
-import { number } from 'joi';
 import { EntityIdDto } from '../../common/dto/entity-id.dto';
 import { BcryptService } from '../../common/services/bcrypt.service';
+import { ListResult } from '../../common/types/list-result';
+import { ListDto } from '../../common/dto/list.dto';
 
 @Injectable()
 export class ArticleService extends GenericService<Article> {
-  static articleStoragePathPrefix = './storage/articles';
-  static articlePublicPathPrefix = './public/articles';
-
   constructor(
     @InjectRepository(Article) private readonly repository: Repository<Article>,
     private readonly articleManagerService: ArticleManagerService,
@@ -234,5 +232,39 @@ export class ArticleService extends GenericService<Article> {
 
     // get content
     return article;
+  }
+
+  async list(
+    dto: ListDto,
+    options?: FindManyOptions<Article>,
+  ): Promise<ListResult<Article>> {
+    return await super.list(dto, {
+      ...options,
+      relations: {
+        cover: true,
+        tags: true,
+        categories: true,
+      },
+      select: {
+        cover: {
+          path: true,
+        },
+        tags: {
+          id: true,
+          name: true,
+        },
+        categories: {
+          id: true,
+          name: true,
+        },
+        id: true,
+        title: true,
+        description: true,
+        createdAt: true,
+        updatedAt: true,
+        path: true,
+        password: true,
+      },
+    });
   }
 }
