@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Article } from './article.entity';
-import { FindManyOptions, Repository } from 'typeorm';
+import { Between, ILike, Repository } from 'typeorm';
 import { ArticleManagerService } from '../../managers/article-manager/article.manager.service';
 import { GenericService } from '../../common/services/generic.service';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -14,8 +14,8 @@ import { DeleteDto } from '../../common/dto/delete.dto';
 import { EntityIdDto } from '../../common/dto/entity-id.dto';
 import { BcryptService } from '../../common/services/bcrypt.service';
 import { ListResult } from '../../common/types/list-result';
-import { ListDto } from '../../common/dto/list.dto';
-import { GetListByTagDto } from './dto/get-list-by-tag.dto';
+import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
+import { FilterArticleDto } from './dto/filter-article.dto';
 
 @Injectable()
 export class ArticleService extends GenericService<Article> {
@@ -235,12 +235,40 @@ export class ArticleService extends GenericService<Article> {
     return article;
   }
 
-  async list(
-    dto: ListDto,
-    options?: FindManyOptions<Article>,
-  ): Promise<ListResult<Article>> {
-    return await super.list(dto, {
-      ...options,
+  async getListByFilters(dto: FilterArticleDto): Promise<ListResult<Article>> {
+    const {
+      tagId,
+      categoryId,
+      title,
+      posterId,
+      createdStartDate,
+      createdEndDate,
+      updatedStartDate,
+      updatedEndDate,
+      ...rest
+    } = dto;
+
+    let where: FindOptionsWhere<Article> = {};
+    if (tagId) {
+      where.tags = {};
+      where.tags.id = tagId;
+    }
+    if (categoryId) {
+      where.categories = {};
+      where.categories.id = categoryId;
+    }
+    if (title) where.title = ILike('%' + title + '%');
+    if (posterId) {
+      where.poster = {};
+      where.poster.id = posterId;
+    }
+    if (createdStartDate && createdEndDate)
+      where.createdAt = Between(createdStartDate, createdEndDate);
+    if (updatedStartDate && updatedEndDate)
+      where.updatedAt = Between(updatedStartDate, updatedEndDate);
+
+    return await super.list(rest, {
+      where,
       relations: {
         cover: true,
         tags: true,
@@ -265,17 +293,6 @@ export class ArticleService extends GenericService<Article> {
         updatedAt: true,
         path: true,
         password: true,
-      },
-    });
-  }
-
-  async getListByTag(dto: GetListByTagDto) {
-    const { tagId, ...rest } = dto;
-    return await this.list(rest, {
-      where: {
-        tags: {
-          id: tagId,
-        },
       },
     });
   }

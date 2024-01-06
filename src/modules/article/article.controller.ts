@@ -12,8 +12,8 @@ import { listJoi } from '../../common/joi/list.joi';
 import { ListDto } from '../../common/dto/list.dto';
 import { idJoi } from '../../common/joi/id.joi';
 import { EntityIdDto } from '../../common/dto/entity-id.dto';
-import { getListByTagJoi } from './joi/get-list-by-tag.joi';
-import { GetListByTagDto } from './dto/get-list-by-tag.dto';
+import { filterArticlesJoi } from './joi/filter-articles.joi';
+import { FilterArticleDto } from './dto/filter-article.dto';
 
 @Controller('article')
 export class ArticleController {
@@ -44,9 +44,9 @@ export class ArticleController {
   }
 
   @Get('list')
-  @UsePipes(new JoiValidationPipe(listJoi))
-  async list(@Query() query: ListDto) {
-    return await this.service.list(query);
+  @UsePipes(new JoiValidationPipe(filterArticlesJoi))
+  async list(@Query() query: FilterArticleDto) {
+    return await this.service.getListByFilters(query);
   }
 
   @Get('deleted_list')
@@ -59,11 +59,5 @@ export class ArticleController {
   @UsePipes(new JoiValidationPipe(idJoi))
   async detail(@Query() query: EntityIdDto) {
     return await this.service.detail(query);
-  }
-
-  @Get('get_list_by_tag')
-  @UsePipes(new JoiValidationPipe(getListByTagJoi))
-  async getListByTag(@Query() query: GetListByTagDto) {
-    return await this.service.getListByTag(query);
   }
 }
