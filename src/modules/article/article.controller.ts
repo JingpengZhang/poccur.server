@@ -20,7 +20,7 @@ export class ArticleController {
   @Post('create')
   @UsePipes(new JoiValidationPipe(createArticleJoi))
   async create(@CurrentUser() userId: number, @Body() body: CreateArticleDto) {
-    await this.service.create(userId, body);
+    return await this.service.create(userId, body);
   }
 
   @Post('delete')

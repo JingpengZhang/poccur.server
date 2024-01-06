@@ -87,6 +87,10 @@ export class ArticleService extends GenericService<Article> {
 
     // save repository
     await this.repository.save(article);
+
+    return {
+      id: article.id,
+    };
   }
 
   async update(dto: UpdateArticleDto) {
