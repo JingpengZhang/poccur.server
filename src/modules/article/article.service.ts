@@ -16,6 +16,7 @@ import { BcryptService } from '../../common/services/bcrypt.service';
 import { ListResult } from '../../common/types/list-result';
 import { FindOptionsWhere } from 'typeorm/find-options/FindOptionsWhere';
 import { FilterArticleDto } from './dto/filter-article.dto';
+import { CheckPasswordDto } from './dto/check-password.dto';
 
 @Injectable()
 export class ArticleService extends GenericService<Article> {
@@ -295,5 +296,11 @@ export class ArticleService extends GenericService<Article> {
         password: true,
       },
     });
+  }
+
+  async checkPassword(dto: CheckPasswordDto) {
+    const article = await this.findOneById(dto.id);
+    if (!article) throw new BadRequestException('文章不存在');
+    return this.bcryptService.comparePassword(dto.password, article.password);
   }
 }

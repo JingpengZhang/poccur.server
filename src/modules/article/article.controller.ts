@@ -14,6 +14,8 @@ import { idJoi } from '../../common/joi/id.joi';
 import { EntityIdDto } from '../../common/dto/entity-id.dto';
 import { filterArticlesJoi } from './joi/filter-articles.joi';
 import { FilterArticleDto } from './dto/filter-article.dto';
+import { checkPasswordJoi } from './joi/check-password.joi';
+import { CheckPasswordDto } from './dto/check-password.dto';
 
 @Controller('article')
 export class ArticleController {
@@ -59,5 +61,11 @@ export class ArticleController {
   @UsePipes(new JoiValidationPipe(idJoi))
   async detail(@Query() query: EntityIdDto) {
     return await this.service.detail(query);
+  }
+
+  @Post('check_password')
+  @UsePipes(new JoiValidationPipe(checkPasswordJoi))
+  async checkPassword(@Body() body: CheckPasswordDto) {
+    return await this.service.checkPassword(body);
   }
 }
