@@ -94,7 +94,16 @@ export class ArticleService extends GenericService<Article> {
   }
 
   async update(dto: UpdateArticleDto) {
-    const { id, tags, categories, cover, content, description, ...rest } = dto;
+    const {
+      id,
+      tags,
+      categories,
+      cover,
+      content,
+      description,
+      password,
+      ...rest
+    } = dto;
 
     const article = await this.repository.findOne({
       where: {
@@ -161,6 +170,10 @@ export class ArticleService extends GenericService<Article> {
         article.storagePath,
       );
     }
+
+    // 加密密码
+    if (password)
+      article.password = this.bcryptService.encodePassword(password);
 
     // combine rest arguments
     Object.assign(article, rest);
