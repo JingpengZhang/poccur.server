@@ -13,6 +13,7 @@ import { FileType } from '../../constants/file-type.enum';
 import { DeleteDto } from '../../common/dto/delete.dto';
 import { number } from 'joi';
 import { EntityIdDto } from '../../common/dto/entity-id.dto';
+import { BcryptService } from '../../common/services/bcrypt.service';
 
 @Injectable()
 export class ArticleService extends GenericService<Article> {
@@ -23,12 +24,14 @@ export class ArticleService extends GenericService<Article> {
     @InjectRepository(Article) private readonly repository: Repository<Article>,
     private readonly articleManagerService: ArticleManagerService,
     private readonly storageService: StorageService,
+    private readonly bcryptService: BcryptService,
   ) {
     super(repository);
   }
 
   async create(posterId: number, dto: CreateArticleDto) {
-    const { title, tags, categories, cover, description, ...rest } = dto;
+    const { title, tags, categories, cover, description, password, ...rest } =
+      dto;
 
     const posterEntity = await this.articleManagerService.getUserById(posterId);
 
@@ -67,6 +70,10 @@ export class ArticleService extends GenericService<Article> {
     article.categories = categoryEntities;
     article.cover = coverFileEntity;
     article.poster = posterEntity;
+
+    // 加密密码
+    if (password)
+      article.password = this.bcryptService.encodePassword(password);
 
     // if no description, generate description
     let _description = description;
