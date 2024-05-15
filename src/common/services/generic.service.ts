@@ -39,9 +39,9 @@ export class GenericService<T> {
     dto: ListDto,
     options?: FindManyOptions<T>,
   ): Promise<ListResult<T>> {
-    const page = dto.page | 1;
-    const pageSize = dto.pageSize | 10;
+    const page = dto.page || 1;
 
+    const pageSize = dto.pageSize || 10;
     const skip = (page - 1) * pageSize;
     const take = pageSize;
 
