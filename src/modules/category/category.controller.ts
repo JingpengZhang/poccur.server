@@ -17,6 +17,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 export class CategoryController {
   constructor(private readonly service: CategoryService) {}
 
+  // 添加分类
   @Post('create')
   // @Roles(Role.Super, Role.Admin)
   @UsePipes(new JoiValidationPipe(categoryCreateJoi))
@@ -59,8 +60,7 @@ export class CategoryController {
   @UsePipes(new JoiValidationPipe(listJoi))
   async list(@Query() query: ListDto) {
     return {
-      list: await this.service.list(query),
-      total: await this.service.count(),
+      ...(await this.service.list(query)),
     };
   }
 }
