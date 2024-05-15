@@ -50,6 +50,10 @@ export class GenericService<T> {
         ...options,
         skip,
         take,
+        order: {
+          // @ts-ignore
+          createdAt: 'DESC',
+        },
       }),
       currentPage: page,
       pageSize: pageSize,
