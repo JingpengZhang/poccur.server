@@ -7,10 +7,13 @@ export class CaptchaService {
 
   generateCaptcha() {
     this.captcha = svgCaptcha.create({
+      background: '#37373d',
       color: false,
       size: 4,
       noise: 2,
       ignoreChars: '0o1i',
+      width: 120,
+      height: 46,
     });
     return this.captcha.data;
   }
