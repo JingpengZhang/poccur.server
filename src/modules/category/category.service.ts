@@ -50,6 +50,8 @@ export class CategoryService extends GenericService<Category> {
     const tag = await this.findOneById(dto.id);
     if (!tag) throw new NotFoundException('Tag not found');
     Object.assign(tag, rest);
+    console.log(tag);
+
     await this.repository.save(tag);
   }
 }

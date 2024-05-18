@@ -1,6 +1,6 @@
-import { CategoryCreateDto } from './category.create.dto';
+import { Icon } from 'src/common/entities/icon.entity';
 
-export interface CategoryUpdateDto {
+export interface CategoryUpdateDto extends Icon {
   id: number;
   name?: string;
   alias?: string;
