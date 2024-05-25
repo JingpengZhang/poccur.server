@@ -14,16 +14,28 @@ import { ListDto } from '../../common/dto/list.dto';
 import { DeleteQueryDto } from '../../common/dto/delete-query.dto';
 import { deleteQueryJoi } from '../../common/joi/delete-query.joi';
 import { DevOnlyPipe } from '../../common/pipes/dev-only.pipe';
+import { Public } from '../../common/decorators/public.decorator';
+import formidable from 'formidable';
+import { UploadedFiles } from '@blazity/nest-file-fastify';
+import { UploadFilesDto } from './dto/upload-files.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('file')
 export class FileController {
   constructor(private readonly service: FileService) {}
 
-  // 上传文件（可同时上传多个）
   @Post('upload')
   async upload(@CurrentUser() userId: number, @Req() request: FastifyRequest) {
-    await this.service.uploadFiles(userId, request.parts());
+    console.log(userId, request.files());
+  }
+
+  @Post('upload-multiple')
+  async uploadMultiple(@Body() body: any, @Req() request: FastifyRequest) {
+    console.log(request, body);
+    const files = request.files();
+    return {
+      info: await this.service.saveFiles(files, request['user'].id),
+    };
   }
 
   @Post('delete')

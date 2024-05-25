@@ -4,7 +4,7 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
-import { MultipartFile } from '@fastify/multipart';
+import { Multipart, MultipartFile } from '@fastify/multipart';
 import * as fs from 'fs';
 import * as dayjs from 'dayjs';
 import * as util from 'util';
@@ -22,6 +22,7 @@ import { FileType } from '../../constants/file-type.enum';
 import { CreateFileDto } from './dto/create-file.dto';
 import { FolderService } from '../folder/folder.service';
 import { StorageService } from '../../common/services/storage.service';
+import { Folder } from '../folder/folder.entity';
 
 const pump = util.promisify(pipeline);
 
@@ -39,80 +40,96 @@ export class FileService extends GenericService<File> {
     super(repository);
   }
 
-  async storageFile(userId: number, file: TFile) {
-    const { name, extension } = fileUtils.getNameAndExtension(
-      file.originalFilename,
-    );
+  // 存储文件到指定文件夹
+  async uploadFiles(userId: number, parts: AsyncIterableIterator<Multipart>) {
+    // 文件夹
+    let folder: Folder;
 
-    const fileType = fileUtils.getFileTypeByExtension(extension);
+    // 上传者
+    const uploader = await this.userService.findOneById(userId);
 
-    const now = dayjs();
+    if (uploader) {
+      // 文件数据库实体数组
+      const fileEntities: File[] = [];
 
-    let storagePath = this.storageService.getUserStoragePath(
-      userId,
-      fileType,
-      true,
-    );
+      // 循环处理传入的 parts （包含字段和文件）
+      for await (const part of parts) {
+        if (part.type === 'file') {
+          // 分离文件名称及后缀
+          const { name, extension } = fileUtils.getNameAndExtension(
+            part.filename,
+          );
 
-    const fileName =
-      name + '_' + this.storageService.getRandomString() + '.' + extension;
+          // 获取文件类型
+          const fileType = fileUtils.getFileTypeByExtension(extension);
 
-    storagePath += '/' + fileName;
+          // 获取文件存储地址
+          let storagePath = this.storageService.getUserStoragePath(
+            userId,
+            fileType,
+            true,
+          );
 
-    fs.renameSync(file.filepath, storagePath);
+          // 获取最终文件名
+          const fileName =
+            name +
+            '_' +
+            this.storageService.getRandomString() +
+            '.' +
+            extension;
 
-    return {
-      publicPath: this.storageService.transferToPublicPath(storagePath),
-      storagePath,
-      fileName,
-      fileType,
-      fileExtension: extension,
-    };
-  }
+          // 获取最终文件存储地址
+          storagePath += '/' + fileName;
 
-  async upload(dto: CreateFileDto) {
-    const { file, uploaderId, filename, folderId, ...rest } = dto;
+          // 将文件存储到本地
+          await pump(part.file, fs.createWriteStream(storagePath));
 
-    const uploader = await this.userService.findOneById(uploaderId);
-    if (!uploader) throw new BadRequestException('非法上传');
+          // 读取文件信息
+          const stat = fs.statSync(storagePath);
 
-    const folder = folderId
-      ? await this.folderService.findOneById(folderId)
-      : null;
-    // 存储到磁盘
-    const fileInfo = await this.storageFile(uploaderId, file);
+          // 构造数据库存储实体
+          const fileEntity = new File();
+          fileEntity.path =
+            this.storageService.transferToPublicPath(storagePath);
+          fileEntity.filename = fileName;
+          fileEntity.extension = extension;
+          fileEntity.storagePath = storagePath;
+          fileEntity.type = fileType;
+          fileEntity.filesize = stat.size;
+          fileEntity.uploader = uploader;
 
-    const fileEntity = new File();
-    fileEntity.path = fileInfo.publicPath;
-    fileEntity.filename = fileInfo.fileName;
-    fileEntity.type = fileInfo.fileType;
-    fileEntity.filesize = file.size;
-    fileEntity.extension = fileInfo.fileExtension;
-    fileEntity.uploader = uploader;
-    fileEntity.storagePath = fileInfo.storagePath;
-    fileEntity.extra = {};
-    fileEntity.folder = folder;
-    Object.assign(fileEntity, rest);
+          // 如果文件为图片类型，获取图片分辨率
+          if (fileType === FileType.Image) {
+            let extra: FileExtraProperty = {
+              width: 0,
+              height: 0,
+            };
+            const dimensions = fileUtils.getImageDimensions(storagePath);
+            extra.width = dimensions.width;
+            extra.height = dimensions.height;
+            fileEntity.extra = extra;
+          }
 
-    if (fileInfo.fileType === FileType.Image) {
-      const dimensions = fileUtils.getImageDimensions(fileInfo.storagePath);
-      (fileEntity.extra as FileExtraProperty).width = dimensions.width;
-      (fileEntity.extra as FileExtraProperty).height = dimensions.height;
+          // 将数据实体存储实体数组
+          fileEntities.push(fileEntity);
+        } else {
+          if (part.fieldname === 'folder_id') {
+            const folderId = parseInt(part.value as string);
+
+            // 查找文件夹实体
+            folder = await this.folderService.findOneById(folderId);
+          }
+        }
+      }
+
+      // 将文件夹id保存到数据库实体上，并将实体存储到数据库中
+      for (let i = 0; i < fileEntities.length; i++) {
+        const entity = fileEntities[i];
+        entity.folder = folder || null;
+        await this.repository.save(entity);
+      }
     }
-
-    return await this.repository.save(fileEntity);
-  }
-
-  async saveFiles(
-    files: AsyncIterableIterator<MultipartFile>,
-    uploaderId: number,
-  ) {
-    const data = [];
-    for await (const file of files) {
-      // const info = await this.saveFile(file, uploaderId);
-      // data.push(info);
-    }
-    return data;
+    return;
   }
 
   async getList(dto: ListDto) {

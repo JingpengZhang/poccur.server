@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@blazity/nest-file-fastify": "^1.0.0",
     "@fastify/multipart": "^8.0.0",
     "@fastify/static": "^6.12.0",
     "@nestjs/common": "^10.0.0",
