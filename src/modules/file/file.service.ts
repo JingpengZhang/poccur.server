@@ -109,7 +109,7 @@ export class FileService extends GenericService<File> {
             // 如果文件为视频类型
 
             // 获取视频时长
-            const duration = await FileUtils.getVideoTime(storagePath);
+            const duration = await FileUtils.getVideoDuration(storagePath);
             extra.duration = duration;
 
             // 封面存储地址

@@ -6,7 +6,7 @@ class FileUtils {
   constructor() {}
 
   // 获取视频时长
-  static getVideoTime(videoPath: string): Promise<number> {
+  static getVideoDuration(videoPath: string): Promise<number> {
     return new Promise((resolve) => {
       // 获取视频时长目录指令
       const cmd = `ffprobe -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 ${videoPath}`;
@@ -50,7 +50,7 @@ class FileUtils {
   ): Promise<string> {
     return new Promise(async (resolve, reject) => {
       // 获取视频时长
-      const duration = await FileUtils.getVideoTime(videoPath);
+      const duration = await FileUtils.getVideoDuration(videoPath);
 
       // 视频截取时间点
       const sec = duration > 5 ? 5 : duration / 2;
