@@ -134,29 +134,29 @@ export class UserService extends GenericService<User> {
   }
 
   async updateAvatar(dto: UserUpdateAvatarDto) {
-    const file = await this.fileService.upload({
-      file: dto.file,
-      uploaderId: dto.uploaderId,
-    });
-
-    const user = await this.repository.findOne({
-      where: {
-        id: dto.uploaderId,
-      },
-      relations: {
-        avatar: true,
-      },
-      select: {
-        avatar: {
-          id: true,
-        },
-      },
-    });
-
-    if (user.avatar.id) await this.fileService.delete(user.avatar.id);
-
-    user.avatar = file;
-
-    return await this.repository.save(user);
+    // const file = await this.fileService.upload({
+    //   file: dto.file,
+    //   uploaderId: dto.uploaderId,
+    // });
+    //
+    // const user = await this.repository.findOne({
+    //   where: {
+    //     id: dto.uploaderId,
+    //   },
+    //   relations: {
+    //     avatar: true,
+    //   },
+    //   select: {
+    //     avatar: {
+    //       id: true,
+    //     },
+    //   },
+    // });
+    //
+    // if (user.avatar.id) await this.fileService.delete(user.avatar.id);
+    //
+    // user.avatar = file;
+    //
+    // return await this.repository.save(user);
   }
 }

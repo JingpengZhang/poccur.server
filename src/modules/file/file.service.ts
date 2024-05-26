@@ -110,6 +110,9 @@ export class FileService extends GenericService<File> {
             fileEntity.extra = extra;
           }
 
+          // 默认 extra 数据
+          if (!fileEntity.extra) fileEntity.extra = {};
+
           // 将数据实体存储实体数组
           fileEntities.push(fileEntity);
         } else {
