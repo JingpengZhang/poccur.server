@@ -119,8 +119,8 @@ export class FileService extends GenericService<File> {
             // 截取封面
             await FileUtils.generateVideoThumb(storagePath, thumbPath);
 
-            // 存储封面文件
-            extra.thumb = thumbPath;
+            // 存储封面文件（需要转为公共地址）
+            extra.thumb = this.storageService.transferToPublicPath(thumbPath);
           } else if (fileType === FileType.Audio) {
             // 如果文件为音频类型
             // 获取音频时长
