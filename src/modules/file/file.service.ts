@@ -106,7 +106,9 @@ export class FileService extends GenericService<File> {
             extra.width = dimensions.width;
             extra.height = dimensions.height;
           } else if (fileType === FileType.Video) {
-            // 如果文件为视频类型，获取视频时长
+            // 如果文件为视频类型
+
+            // 获取视频时长
             const duration = await FileUtils.getVideoTime(storagePath);
             extra.duration = duration;
 
@@ -119,6 +121,10 @@ export class FileService extends GenericService<File> {
 
             // 存储封面文件
             extra.thumb = thumbPath;
+          } else if (fileType === FileType.Audio) {
+            // 如果文件为音频类型
+            // 获取音频时长
+            extra.duration = await FileUtils.getAudioDuration(storagePath);
           }
           fileEntity.extra = extra;
 

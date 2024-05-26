@@ -24,6 +24,25 @@ class FileUtils {
     });
   }
 
+  // 获取音频时长
+  static getAudioDuration(audioPath: string): Promise<number> {
+    return new Promise((resolve) => {
+      // 指令
+      const cmd = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 -i ${audioPath}`;
+
+      // 执行指令
+      exec(cmd, (err, stdout, errout) => {
+        if (!err) {
+          // 返回时长
+          resolve(parseFloat(stdout));
+        } else {
+          console.error(errout);
+          resolve(0);
+        }
+      });
+    });
+  }
+
   // 自动获取视频指定帧画面作为视频封面
   static generateVideoThumb(
     videoPath: string,
