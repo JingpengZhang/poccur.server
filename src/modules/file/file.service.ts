@@ -23,6 +23,7 @@ import { CreateFileDto } from './dto/create-file.dto';
 import { FolderService } from '../folder/folder.service';
 import { StorageService } from '../../common/services/storage.service';
 import { Folder } from '../folder/folder.entity';
+import FileUtils from 'src/utils/file-utils';
 
 const pump = util.promisify(pipeline);
 
@@ -60,26 +61,25 @@ export class FileService extends GenericService<File> {
             part.filename,
           );
 
+          // 替换文件名中的空格为 "_"
+          const originFileName = name.replaceAll(' ', '_');
+
           // 获取文件类型
           const fileType = fileUtils.getFileTypeByExtension(extension);
 
-          // 获取文件存储地址
-          let storagePath = this.storageService.getUserStoragePath(
-            userId,
-            fileType,
-            true,
-          );
+          // 获取文件存储目录
+          const storageDir =
+            this.storageService.getUserStoragePath(userId, fileType, true) +
+            '/';
+
+          // 防重名标识
+          const nanoid = this.storageService.getRandomString();
 
           // 获取最终文件名
-          const fileName =
-            name +
-            '_' +
-            this.storageService.getRandomString() +
-            '.' +
-            extension;
+          let fileName = originFileName + '_' + nanoid + '.' + extension;
 
           // 获取最终文件存储地址
-          storagePath += '/' + fileName;
+          const storagePath = storageDir + fileName;
 
           // 将文件存储到本地
           await pump(part.file, fs.createWriteStream(storagePath));
@@ -98,20 +98,29 @@ export class FileService extends GenericService<File> {
           fileEntity.filesize = stat.size;
           fileEntity.uploader = uploader;
 
+          // 素材附加信息
+          let extra: FileExtraProperty = {};
           // 如果文件为图片类型，获取图片分辨率
           if (fileType === FileType.Image) {
-            let extra: FileExtraProperty = {
-              width: 0,
-              height: 0,
-            };
             const dimensions = fileUtils.getImageDimensions(storagePath);
             extra.width = dimensions.width;
             extra.height = dimensions.height;
-            fileEntity.extra = extra;
-          }
+          } else if (fileType === FileType.Video) {
+            // 如果文件为视频类型，获取视频时长
+            const duration = await FileUtils.getVideoTime(storagePath);
+            extra.duration = duration;
 
-          // 默认 extra 数据
-          if (!fileEntity.extra) fileEntity.extra = {};
+            // 封面存储地址
+            const thumbPath =
+              storageDir + originFileName + '_' + nanoid + '_thumb.jpg';
+
+            // 截取封面
+            await FileUtils.generateVideoThumb(storagePath, thumbPath);
+
+            // 存储封面文件
+            extra.thumb = thumbPath;
+          }
+          fileEntity.extra = extra;
 
           // 将数据实体存储实体数组
           fileEntities.push(fileEntity);

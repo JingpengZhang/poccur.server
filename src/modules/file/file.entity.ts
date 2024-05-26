@@ -5,9 +5,10 @@ import { BaseEntity } from '../../common/entities/base.entity';
 import { Folder } from '../folder/folder.entity';
 
 export interface FileExtraProperty {
-  thumb?: string; // id
+  thumb?: string; // 预览图
   width?: number;
   height?: number;
+  duration?: number; // 视频、音频时长
 }
 
 @Entity()
